@@ -1,0 +1,67 @@
+﻿# Visual Studio / .NET build output
+.vs/
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+dist/
+publish/
+
+# Visual Studio user-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.rsuser
+*.userprefs
+
+# NuGet restored packages and caches
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+
+# Test and coverage results
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage*.xml
+
+# ReSharper / Rider / other IDE metadata
+_ReSharper*/
+*.ReSharper
+*.DotSettings.user
+.idea/
+.vscode/
+
+# Temporary and backup files
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+*.log
+*.pid
+*.user.lock.json
+~$*
+
+# Runtime data generated beside LoanManagerApp.exe
+**/Config/settings.json
+**/Config/settings.json.broken_*
+**/Data/*.db
+**/Data/*.db-shm
+**/Data/*.db-wal
+**/Data/*.sqlite
+**/Data/*.sqlite3
+**/Logs/*
+
+
+# OS-generated files
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Publish/package output
+*.zip
