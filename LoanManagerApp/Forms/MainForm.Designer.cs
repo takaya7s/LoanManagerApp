@@ -45,7 +45,6 @@ namespace LoanManagerApp.Forms
         private DataGridView _scheduleGrid;
         private DataGridViewTextBoxColumn _colSchedulePaymentNumber;
         private DataGridViewTextBoxColumn _colScheduleTargetMonth;
-        private DataGridViewTextBoxColumn _colScheduleBaseDueDate;
         private DataGridViewTextBoxColumn _colSchedulePaymentDate;
         private DataGridViewTextBoxColumn _colScheduleRepaymentAmount;
         private DataGridViewTextBoxColumn _colSchedulePaymentAmount;
@@ -106,7 +105,6 @@ namespace LoanManagerApp.Forms
             this._scheduleGrid = new DataGridView();
             this._colSchedulePaymentNumber = new DataGridViewTextBoxColumn();
             this._colScheduleTargetMonth = new DataGridViewTextBoxColumn();
-            this._colScheduleBaseDueDate = new DataGridViewTextBoxColumn();
             this._colSchedulePaymentDate = new DataGridViewTextBoxColumn();
             this._colScheduleRepaymentAmount = new DataGridViewTextBoxColumn();
             this._colSchedulePaymentAmount = new DataGridViewTextBoxColumn();
@@ -560,7 +558,6 @@ namespace LoanManagerApp.Forms
             this._scheduleGrid.Columns.AddRange(new DataGridViewColumn[] {
             this._colSchedulePaymentNumber,
             this._colScheduleTargetMonth,
-            this._colScheduleBaseDueDate,
             this._colSchedulePaymentDate,
             this._colScheduleRepaymentAmount,
             this._colSchedulePaymentAmount,
@@ -600,15 +597,6 @@ namespace LoanManagerApp.Forms
             this._colScheduleTargetMonth.ReadOnly = true;
             this._colScheduleTargetMonth.SortMode = DataGridViewColumnSortMode.Automatic;
             this._colScheduleTargetMonth.Width = 100;
-            // 
-            // _colScheduleBaseDueDate
-            // 
-            this._colScheduleBaseDueDate.DataPropertyName = "BaseDueDateText";
-            this._colScheduleBaseDueDate.HeaderText = "調整前";
-            this._colScheduleBaseDueDate.Name = "_colScheduleBaseDueDate";
-            this._colScheduleBaseDueDate.ReadOnly = true;
-            this._colScheduleBaseDueDate.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleBaseDueDate.Width = 100;
             // 
             // _colSchedulePaymentDate
             // 

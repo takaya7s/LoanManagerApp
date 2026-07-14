@@ -137,16 +137,24 @@ CREATE INDEX IF NOT EXISTS IX_RepaymentSchedule_PaymentDate
                     RepaymentTypeName = DisplayText.RepaymentTypeShort(loan.RepaymentType),
                     BonusPaymentName = DisplayText.BonusPayment(loan.BonusPaymentFrequency),
                     PrincipalAmount = loan.PrincipalAmount,
+                    BorrowDate = loan.BorrowDate,
                     AnnualInterestRate = loan.AnnualInterestRate,
                     NextPaymentDate = next == null ? (DateTime?)null : next.PaymentDate,
                     NextPaymentAmount = next == null ? 0 : next.PaymentAmount,
                     RemainingBalance = remainingBalance,
                     RemainingPaymentCount = remainingCount,
-                    TotalPaymentAmount = totalPayment
+                    TotalPaymentAmount = totalPayment,
+                    IsCompleted = remainingCount == 0 && remainingBalance == 0
                 });
             }
 
-            return items;
+            return items
+                .OrderBy(x => x.IsCompleted ? 1 : 0)
+                .ThenBy(x => x.BorrowDate)
+                .ThenByDescending(x => x.PrincipalAmount)
+                .ThenByDescending(x => x.RemainingPaymentCount)
+                .ThenBy(x => x.Id)
+                .ToList();
         }
 
         public IList<Loan> GetLoans()
@@ -155,7 +163,7 @@ CREATE INDEX IF NOT EXISTS IX_RepaymentSchedule_PaymentDate
             using (SQLiteConnection connection = OpenConnection())
             using (SQLiteCommand command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * FROM Loans ORDER BY BorrowDate ASC, PrincipalAmount DESC, Id ASC;";
+                command.CommandText = "SELECT * FROM Loans ORDER BY Id ASC;";
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())

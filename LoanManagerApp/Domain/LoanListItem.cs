@@ -9,11 +9,13 @@ namespace LoanManagerApp.Domain
         public string RepaymentTypeName { get; set; }
         public string BonusPaymentName { get; set; }
         public long PrincipalAmount { get; set; }
+        public DateTime BorrowDate { get; set; }
         public decimal AnnualInterestRate { get; set; }
         public DateTime? NextPaymentDate { get; set; }
         public long NextPaymentAmount { get; set; }
         public long RemainingBalance { get; set; }
         public long TotalPaymentAmount { get; set; }
         public int RemainingPaymentCount { get; set; }
+        public bool IsCompleted { get; set; }
     }
 }

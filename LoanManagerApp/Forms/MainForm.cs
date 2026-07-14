@@ -20,6 +20,7 @@ namespace LoanManagerApp.Forms
 
         private DateTime _simulationDate = DateTime.Today;
         private bool _updatingSimulationDate;
+        private bool _loadingLoanList;
         private long? _selectedLoanId;
 
         // Visual Studioデザイナー用。アプリケーションからは使用しません。
@@ -122,24 +123,50 @@ namespace LoanManagerApp.Forms
         {
             try
             {
+                long? targetLoanId = selectLoanId ?? _selectedLoanId;
                 IList<LoanListItem> items = _repository.GetLoanListItems(_simulationDate);
-                _loanGrid.DataSource = items.ToList();
-                _statusLabel.Text = string.Format(
-                    "登録ローン: {0}件　　ログ: {1}",
-                    items.Count,
-                    Logger.LogFilePath);
 
-                if (items.Count == 0)
+                _loadingLoanList = true;
+                try
                 {
-                    _selectedLoanId = null;
-                    _scheduleGrid.DataSource = null;
-                    _txtDetails.Clear();
-                    _lblScheduleSummary.Text = "ローンを新規登録してください。";
-                    return;
+                    _loanGrid.DataSource = items.ToList();
+                    ApplyLoanRowStyles();
+                    _statusLabel.Text = string.Format(
+                        "登録ローン: {0}件　　ログ: {1}",
+                        items.Count,
+                        Logger.LogFilePath);
+
+                    if (items.Count == 0)
+                    {
+                        _selectedLoanId = null;
+                        _scheduleGrid.DataSource = null;
+                        _txtDetails.Clear();
+                        _lblScheduleSummary.Text = "ローンを新規登録してください。";
+                    }
+                    else
+                    {
+                        long targetId = targetLoanId.HasValue &&
+                            items.Any(x => x.Id == targetLoanId.Value)
+                            ? targetLoanId.Value
+                            : items[0].Id;
+                        SelectLoanRow(targetId);
+
+                        LoanListItem selected = GetSelectedLoanListItem();
+                        _selectedLoanId = selected == null ? (long?)null : selected.Id;
+                    }
+                }
+                finally
+                {
+                    _loadingLoanList = false;
                 }
 
-                long targetId = selectLoanId ?? items[0].Id;
-                SelectLoanRow(targetId);
+                if (items.Count > 0)
+                {
+                    // DataSourceの再設定中にSelectionChangedが先頭行で発生しても、
+                    // 復元したローンIDを基準に明細を明示的に再読み込みする。
+                    LoadSelectedSchedule();
+                    LoadSelectedDetails();
+                }
             }
             catch (Exception ex)
             {
@@ -150,27 +177,55 @@ namespace LoanManagerApp.Forms
 
         private void SelectLoanRow(long loanId)
         {
+            _loanGrid.ClearSelection();
+
+            DataGridViewRow targetRow = null;
             foreach (DataGridViewRow row in _loanGrid.Rows)
             {
                 LoanListItem item = row.DataBoundItem as LoanListItem;
                 if (item != null && item.Id == loanId)
                 {
-                    row.Selected = true;
-                    _loanGrid.CurrentCell = row.Cells[1];
-                    return;
+                    targetRow = row;
+                    break;
                 }
             }
 
-            if (_loanGrid.Rows.Count > 0)
+            if (targetRow == null && _loanGrid.Rows.Count > 0)
             {
-                _loanGrid.Rows[0].Selected = true;
-                _loanGrid.CurrentCell = _loanGrid.Rows[0].Cells[1];
+                targetRow = _loanGrid.Rows[0];
+            }
+
+            if (targetRow != null)
+            {
+                targetRow.Selected = true;
+                if (targetRow.Cells.Count > 0)
+                {
+                    _loanGrid.CurrentCell = targetRow.Cells[0];
+                }
+            }
+        }
+
+        private void ApplyLoanRowStyles()
+        {
+            foreach (DataGridViewRow row in _loanGrid.Rows)
+            {
+                LoanListItem item = row.DataBoundItem as LoanListItem;
+                if (item != null && item.IsCompleted)
+                {
+                    row.DefaultCellStyle.BackColor = Color.FromArgb(242, 242, 242);
+                    row.DefaultCellStyle.ForeColor = Color.DimGray;
+                }
+                else
+                {
+                    row.DefaultCellStyle.BackColor = SystemColors.Window;
+                    row.DefaultCellStyle.ForeColor = SystemColors.ControlText;
+                }
             }
         }
 
         private void LoanSelectionChanged(object sender, EventArgs e)
         {
-            if (_repository == null)
+            if (_repository == null || _loadingLoanList)
             {
                 return;
             }
@@ -607,7 +662,6 @@ namespace LoanManagerApp.Forms
                 Id = item.Id,
                 PaymentNumber = item.PaymentNumber,
                 TargetMonthText = item.TargetMonth.ToString("yyyy年MM月"),
-                BaseDueDateText = item.BaseDueDate.ToString("yyyy/MM/dd"),
                 PaymentDateText = item.PaymentDate.ToString("yyyy/MM/dd"),
                 RepaymentAmount = item.RepaymentAmount,
                 PaymentAmount = item.PaymentAmount,
@@ -660,7 +714,6 @@ namespace LoanManagerApp.Forms
             public long Id { get; set; }
             public int PaymentNumber { get; set; }
             public string TargetMonthText { get; set; }
-            public string BaseDueDateText { get; set; }
             public string PaymentDateText { get; set; }
             public long RepaymentAmount { get; set; }
             public long PaymentAmount { get; set; }
