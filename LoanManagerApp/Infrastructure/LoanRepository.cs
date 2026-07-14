@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS Loans (
     RepaymentMonths INTEGER NOT NULL,
     DesiredMonthlyPaymentAmount INTEGER NOT NULL DEFAULT 0,
     MonthlyPaymentDay INTEGER NOT NULL,
-    UseBonusPayment INTEGER NOT NULL DEFAULT 0,
+    BonusPaymentFrequency INTEGER NOT NULL DEFAULT 0,
     BonusPrincipalAmount INTEGER NOT NULL DEFAULT 0,
     BonusMonth1 INTEGER NOT NULL DEFAULT 6,
     BonusMonth2 INTEGER NOT NULL DEFAULT 12,
@@ -135,7 +135,7 @@ CREATE INDEX IF NOT EXISTS IX_RepaymentSchedule_PaymentDate
                     Id = loan.Id,
                     Name = loan.Name,
                     RepaymentTypeName = DisplayText.RepaymentTypeShort(loan.RepaymentType),
-                    BonusPaymentName = DisplayText.BonusPayment(loan.UseBonusPayment),
+                    BonusPaymentName = DisplayText.BonusPayment(loan.BonusPaymentFrequency),
                     PrincipalAmount = loan.PrincipalAmount,
                     AnnualInterestRate = loan.AnnualInterestRate,
                     NextPaymentDate = next == null ? (DateTime?)null : next.PaymentDate,
@@ -155,7 +155,7 @@ CREATE INDEX IF NOT EXISTS IX_RepaymentSchedule_PaymentDate
             using (SQLiteConnection connection = OpenConnection())
             using (SQLiteCommand command = connection.CreateCommand())
             {
-                command.CommandText = "SELECT * FROM Loans ORDER BY UpdatedAt DESC, Id DESC;";
+                command.CommandText = "SELECT * FROM Loans ORDER BY BorrowDate ASC, PrincipalAmount DESC, Id ASC;";
                 using (SQLiteDataReader reader = command.ExecuteReader())
                 {
                     while (reader.Read())
@@ -319,13 +319,13 @@ INSERT INTO Loans (
     Name, PrincipalAmount, AnnualInterestRate, RepaymentType,
     InterestCalculationMethod, BorrowDate, FirstRepaymentDate,
     RepaymentSettingMode, RepaymentMonths, DesiredMonthlyPaymentAmount,
-    MonthlyPaymentDay, UseBonusPayment, BonusPrincipalAmount,
+    MonthlyPaymentDay, BonusPaymentFrequency, BonusPrincipalAmount,
     BonusMonth1, BonusMonth2, Memo, CreatedAt, UpdatedAt)
 VALUES (
     @Name, @PrincipalAmount, @AnnualInterestRate, @RepaymentType,
     @InterestCalculationMethod, @BorrowDate, @FirstRepaymentDate,
     @RepaymentSettingMode, @RepaymentMonths, @DesiredMonthlyPaymentAmount,
-    @MonthlyPaymentDay, @UseBonusPayment, @BonusPrincipalAmount,
+    @MonthlyPaymentDay, @BonusPaymentFrequency, @BonusPrincipalAmount,
     @BonusMonth1, @BonusMonth2, @Memo, @CreatedAt, @UpdatedAt);";
                 command.ExecuteNonQuery();
             }
@@ -351,7 +351,7 @@ UPDATE Loans SET
     RepaymentMonths = @RepaymentMonths,
     DesiredMonthlyPaymentAmount = @DesiredMonthlyPaymentAmount,
     MonthlyPaymentDay = @MonthlyPaymentDay,
-    UseBonusPayment = @UseBonusPayment,
+    BonusPaymentFrequency = @BonusPaymentFrequency,
     BonusPrincipalAmount = @BonusPrincipalAmount,
     BonusMonth1 = @BonusMonth1,
     BonusMonth2 = @BonusMonth2,
@@ -391,7 +391,7 @@ WHERE Id = @Id;";
                 "@DesiredMonthlyPaymentAmount",
                 loan.DesiredMonthlyPaymentAmount);
             command.Parameters.AddWithValue("@MonthlyPaymentDay", loan.MonthlyPaymentDay);
-            command.Parameters.AddWithValue("@UseBonusPayment", loan.UseBonusPayment ? 1 : 0);
+            command.Parameters.AddWithValue("@BonusPaymentFrequency", (int)loan.BonusPaymentFrequency);
             command.Parameters.AddWithValue("@BonusPrincipalAmount", loan.BonusPrincipalAmount);
             command.Parameters.AddWithValue("@BonusMonth1", loan.BonusMonth1);
             command.Parameters.AddWithValue("@BonusMonth2", loan.BonusMonth2);
@@ -523,7 +523,7 @@ WHERE LoanId = @LoanId;";
                 DesiredMonthlyPaymentAmount =
                     Convert.ToInt64(reader["DesiredMonthlyPaymentAmount"]),
                 MonthlyPaymentDay = Convert.ToInt32(reader["MonthlyPaymentDay"]),
-                UseBonusPayment = Convert.ToInt32(reader["UseBonusPayment"]) != 0,
+                BonusPaymentFrequency = (BonusPaymentFrequency)Convert.ToInt32(reader["BonusPaymentFrequency"]),
                 BonusPrincipalAmount = Convert.ToInt64(reader["BonusPrincipalAmount"]),
                 BonusMonth1 = Convert.ToInt32(reader["BonusMonth1"]),
                 BonusMonth2 = Convert.ToInt32(reader["BonusMonth2"]),

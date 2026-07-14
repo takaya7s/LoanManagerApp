@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Globalization;
 using System.Linq;
+using System.ComponentModel;
 using System.Windows.Forms;
 using LoanManagerApp.Domain;
 using LoanManagerApp.Infrastructure;
@@ -10,132 +10,47 @@ using LoanManagerApp.Services;
 
 namespace LoanManagerApp.Forms
 {
-    public sealed class LoanEditForm : Form
+    [DesignerCategory("Form")]
+    public sealed partial class LoanEditForm : Form
     {
         private readonly AppSettings _settings;
         private readonly Loan _sourceLoan;
         private readonly RepaymentCalculator _calculator;
-        private Font _inputFont;
-
-        private TextBox _txtName;
-        private TextBox _txtPrincipal;
-        private TextBox _txtRate;
-        private ComboBox _cmbRepaymentType;
-        private ComboBox _cmbInterestMethod;
-        private DateTimePicker _dtpBorrowDate;
-        private DateTimePicker _dtpFirstRepaymentDate;
-        private ComboBox _cmbRepaymentSettingMode;
-        private FlowLayoutPanel _pnlPeriod;
-        private NumericUpDown _nudYears;
-        private NumericUpDown _nudMonths;
-        private NumericUpDown _nudDesiredMonthlyPayment;
-        private Label _lblDesiredMonthlyAmount;
-        private Label _lblMonthlyPaymentNote;
-        private NumericUpDown _nudPaymentDay;
-        private CheckBox _chkUseBonusPayment;
-        private GroupBox _grpBonus;
-        private NumericUpDown _nudBonusPrincipal;
-        private ComboBox _cmbBonusMonth1;
-        private ComboBox _cmbBonusMonth2;
-        private TextBox _txtMemo;
-        private Label _lblPreview;
+        private int _normalClientHeight;
+        private bool _adjustingLayout;
 
         public Loan ResultLoan { get; private set; }
         public IList<RepaymentScheduleItem> ResultSchedule { get; private set; }
 
-        public LoanEditForm(AppSettings settings, Loan loan)
+        // Visual Studioデザイナー用。アプリケーションからは使用しません。
+        public LoanEditForm()
         {
-            _settings = settings;
+            InitializeComponent();
+            _normalClientHeight = ClientSize.Height;
+        }
+
+        public LoanEditForm(AppSettings settings, Loan loan)
+            : this()
+        {
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _sourceLoan = loan;
             _calculator = new RepaymentCalculator();
 
-            InitializeForm();
-            CreateControls();
+            Text = _sourceLoan == null ? "ローンを登録" : "ローンを編集";
+            ConfigureRuntimeControls();
             LoadValues();
             UpdateControlStates();
         }
 
-        private void InitializeForm()
+        private void ConfigureRuntimeControls()
         {
-            Text = _sourceLoan == null ? "ローンを登録" : "ローンを編集";
-            StartPosition = FormStartPosition.CenterParent;
-            MinimumSize = new Size(980, 740);
-            Size = new Size(1140, 920);
-            AutoScaleMode = AutoScaleMode.Dpi;
-            Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
-            _inputFont = new Font("Yu Gothic UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
-        }
+            _lblRateNote.Text = "%（小数点以下" + _settings.InterestRateDecimalPlaces + "桁まで）";
+            _lblPeriodNote.Text = "1～" + _settings.MaximumRepaymentMonths + "か月";
+            _nudYears.Maximum = _settings.MaximumRepaymentMonths / 12;
+            _nudDesiredMonthlyPayment.Maximum = _settings.MaximumLoanAmount;
+            _nudBonusPrincipal.Maximum = _settings.MaximumLoanAmount;
 
-        private void CreateControls()
-        {
-            TableLayoutPanel root = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 3,
-                Padding = new Padding(12)
-            };
-            root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            Controls.Add(root);
-
-            Panel scrollPanel = new Panel
-            {
-                Dock = DockStyle.Fill,
-                AutoScroll = true
-            };
-            root.Controls.Add(scrollPanel, 0, 0);
-            root.MouseDown += BackgroundMouseDown;
-            scrollPanel.MouseDown += BackgroundMouseDown;
-
-            TableLayoutPanel fields = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                ColumnCount = 3,
-                Padding = new Padding(0, 0, 12, 0)
-            };
-            fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220F));
-            fields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            fields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 270F));
-            scrollPanel.Controls.Add(fields);
-            fields.MouseDown += BackgroundMouseDown;
-
-            int row = 0;
-            _txtName = new TextBox { Dock = DockStyle.Fill, MaxLength = 100, Font = _inputFont };
-            AddField(fields, ref row, "ローン名称", _txtName, "必須");
-
-            _txtPrincipal = new TextBox
-            {
-                Dock = DockStyle.Left,
-                Width = 280,
-                Font = _inputFont,
-                MaxLength = 20,
-                TextAlign = HorizontalAlignment.Right
-            };
-            _txtPrincipal.Enter += PrincipalEnter;
-            _txtPrincipal.Leave += PrincipalLeave;
-            _txtPrincipal.KeyPress += PrincipalKeyPress;
-            AddField(fields, ref row, "借入額", _txtPrincipal, "円");
-
-            _txtRate = new TextBox
-            {
-                Dock = DockStyle.Left,
-                Width = 180,
-                Font = _inputFont,
-                MaxLength = 20,
-                TextAlign = HorizontalAlignment.Right
-            };
-            AddField(
-                fields,
-                ref row,
-                "年間金利",
-                _txtRate,
-                "%（小数点以下" + _settings.InterestRateDecimalPlaces + "桁まで）");
-
-            _cmbRepaymentType = CreateDropDown();
-            _cmbRepaymentType.Width = 600;
+            _cmbRepaymentType.Items.Clear();
             AddNamedItem(
                 _cmbRepaymentType,
                 "元利均等返済（元金と利息を含むお支払い額が原則一定）",
@@ -148,252 +63,75 @@ namespace LoanManagerApp.Forms
                 _cmbRepaymentType,
                 "一括返済（期日に元金と利息をまとめて支払い）",
                 RepaymentType.LumpSum);
-            _cmbRepaymentType.SelectedIndexChanged += delegate { UpdateControlStates(); UpdatePreview(); };
-            AddField(fields, ref row, "返済方式", _cmbRepaymentType, string.Empty);
 
-            _cmbInterestMethod = CreateDropDown();
+            _cmbInterestMethod.Items.Clear();
             AddNamedItem(_cmbInterestMethod, "月割り計算", InterestCalculationMethod.Monthly);
             AddNamedItem(_cmbInterestMethod, "日割り計算（Actual/Actual）", InterestCalculationMethod.Daily);
-            AddField(fields, ref row, "利息の計算方法", _cmbInterestMethod, string.Empty);
 
-            _dtpBorrowDate = new DateTimePicker
-            {
-                Format = DateTimePickerFormat.Custom,
-                CustomFormat = "yyyy年MM月dd日",
-                Width = 230,
-                Font = _inputFont
-            };
-            AddField(fields, ref row, "借入日", _dtpBorrowDate, string.Empty);
+            _cmbRepaymentSettingMode.Items.Clear();
+            AddNamedItem(_cmbRepaymentSettingMode, "返済期間で設定", RepaymentSettingMode.ByPeriod);
+            AddNamedItem(_cmbRepaymentSettingMode, "毎月の金額で設定", RepaymentSettingMode.ByMonthlyPayment);
 
-            _dtpFirstRepaymentDate = new DateTimePicker
-            {
-                Format = DateTimePickerFormat.Custom,
-                CustomFormat = "yyyy年MM月dd日",
-                Width = 230,
-                Font = _inputFont
-            };
-            AddField(fields, ref row, "初回返済日", _dtpFirstRepaymentDate, string.Empty);
-
-            _cmbRepaymentSettingMode = CreateDropDown();
-            AddNamedItem(
-                _cmbRepaymentSettingMode,
-                "返済期間で設定",
-                RepaymentSettingMode.ByPeriod);
-            AddNamedItem(
-                _cmbRepaymentSettingMode,
-                "毎月の金額で設定",
-                RepaymentSettingMode.ByMonthlyPayment);
-            _cmbRepaymentSettingMode.SelectedIndexChanged += delegate
-            {
-                UpdateControlStates();
-                UpdatePreview();
-            };
-            AddField(fields, ref row, "返済条件", _cmbRepaymentSettingMode, string.Empty);
-
-            _pnlPeriod = new FlowLayoutPanel
-            {
-                AutoSize = true,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                Margin = new Padding(0)
-            };
-            _nudYears = new NumericUpDown
-            {
-                Width = 90,
-                Font = _inputFont,
-                Minimum = 0,
-                Maximum = _settings.MaximumRepaymentMonths / 12,
-                DecimalPlaces = 0
-            };
-            _nudMonths = new NumericUpDown
-            {
-                Width = 90,
-                Font = _inputFont,
-                Minimum = 0,
-                Maximum = 11,
-                DecimalPlaces = 0
-            };
-            _pnlPeriod.Controls.Add(_nudYears);
-            _pnlPeriod.Controls.Add(new Label { Text = "年", AutoSize = true, Margin = new Padding(4, 6, 12, 0) });
-            _pnlPeriod.Controls.Add(_nudMonths);
-            _pnlPeriod.Controls.Add(new Label { Text = "か月", AutoSize = true, Margin = new Padding(4, 6, 0, 0) });
-            AddField(fields, ref row, "返済期間", _pnlPeriod, "1～" + _settings.MaximumRepaymentMonths + "か月");
-
-            _nudDesiredMonthlyPayment = new NumericUpDown
-            {
-                Dock = DockStyle.Left,
-                Width = 280,
-                Font = _inputFont,
-                DecimalPlaces = 0,
-                ThousandsSeparator = true,
-                Minimum = 1,
-                Maximum = _settings.MaximumLoanAmount,
-                Increment = 1000
-            };
-            _lblMonthlyPaymentNote = AddField(
-                fields,
-                ref row,
-                "毎月のお支払い額",
-                _nudDesiredMonthlyPayment,
-                "円（元金＋利息）",
-                out _lblDesiredMonthlyAmount);
-
-            _nudPaymentDay = new NumericUpDown
-            {
-                Width = 110,
-                Font = _inputFont,
-                Minimum = 1,
-                Maximum = 31,
-                DecimalPlaces = 0
-            };
-            AddField(fields, ref row, "毎月の返済日", _nudPaymentDay, "日（超過時は月末）");
-
-            _chkUseBonusPayment = new CheckBox
-            {
-                Text = "ボーナス払いを使用する",
-                AutoSize = true,
-                Margin = new Padding(3, 8, 3, 8)
-            };
-            _chkUseBonusPayment.CheckedChanged += delegate
-            {
-                UpdateControlStates();
-                UpdatePreview();
-            };
-            AddField(
-                fields,
-                ref row,
-                "ボーナス払い",
-                _chkUseBonusPayment,
-                "一括返済では使用できません");
-
-            _grpBonus = CreateBonusGroup();
-            fields.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            fields.Controls.Add(_grpBonus, 0, row);
-            fields.SetColumnSpan(_grpBonus, 3);
-            row++;
-
-            _txtMemo = new TextBox
-            {
-                Dock = DockStyle.Fill,
-                Multiline = true,
-                Height = 110,
-                Font = _inputFont,
-                ScrollBars = ScrollBars.Vertical,
-                MaxLength = 2000
-            };
-            AddField(fields, ref row, "メモ", _txtMemo, string.Empty);
-
-            _lblPreview = new Label
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = true,
-                MinimumSize = new Size(0, 118),
-                Padding = new Padding(10),
-                BorderStyle = BorderStyle.FixedSingle,
-                Text = "入力内容から返済額を計算します。"
-            };
-            root.Controls.Add(_lblPreview, 0, 1);
-
-            FlowLayoutPanel buttons = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.RightToLeft,
-                AutoSize = true,
-                Padding = new Padding(0, 10, 0, 0)
-            };
-            Button btnCancel = new Button
-            {
-                Text = "キャンセル",
-                DialogResult = DialogResult.Cancel,
-                AutoSize = true,
-                MinimumSize = new Size(120, 42)
-            };
-            Button btnSave = new Button
-            {
-                Text = "保存",
-                AutoSize = true,
-                MinimumSize = new Size(120, 42)
-            };
-            Button btnCalculate = new Button
-            {
-                Text = "再計算",
-                AutoSize = true,
-                MinimumSize = new Size(120, 42)
-            };
-            btnSave.Click += SaveClicked;
-            btnCalculate.Click += delegate { UpdatePreview(); };
-            buttons.Controls.Add(btnCancel);
-            buttons.Controls.Add(btnSave);
-            buttons.Controls.Add(btnCalculate);
-            root.Controls.Add(buttons, 0, 2);
-
-            AcceptButton = btnSave;
-            CancelButton = btnCancel;
-
-            EventHandler previewHandler = delegate { UpdatePreview(); };
-            _txtRate.TextChanged += previewHandler;
-            _cmbInterestMethod.SelectedIndexChanged += previewHandler;
-            _dtpBorrowDate.ValueChanged += previewHandler;
-            _dtpFirstRepaymentDate.ValueChanged += previewHandler;
-            _nudYears.ValueChanged += previewHandler;
-            _nudMonths.ValueChanged += previewHandler;
-            _nudDesiredMonthlyPayment.ValueChanged += previewHandler;
-            _nudPaymentDay.ValueChanged += previewHandler;
-            _nudBonusPrincipal.ValueChanged += previewHandler;
-            _cmbBonusMonth1.SelectedIndexChanged += previewHandler;
-            _cmbBonusMonth2.SelectedIndexChanged += previewHandler;
+            PopulateMonthCombo(_cmbBonusMonth1);
+            PopulateMonthCombo(_cmbBonusMonth2);
         }
 
-        private GroupBox CreateBonusGroup()
+        private static void PopulateMonthCombo(ComboBox combo)
         {
-            GroupBox group = new GroupBox
+            combo.Items.Clear();
+            for (int month = 1; month <= 12; month++)
             {
-                Text = "ボーナス払い設定",
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                Padding = new Padding(10)
-            };
-            TableLayoutPanel table = new TableLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                AutoSize = true,
-                ColumnCount = 2
-            };
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 220F));
-            table.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            group.Controls.Add(table);
+                AddNamedItem(combo, month.ToString(CultureInfo.CurrentCulture), month);
+            }
+        }
 
-            _nudBonusPrincipal = new NumericUpDown
+        private void RepaymentTypeChanged(object sender, EventArgs e)
+        {
+            if (_settings == null)
             {
-                Width = 260,
-                Font = _inputFont,
-                DecimalPlaces = 0,
-                ThousandsSeparator = true,
-                Minimum = 1,
-                Maximum = _settings.MaximumLoanAmount,
-                Increment = 10000
-            };
-            AddSimpleRow(table, 0, "ボーナス払い対象元金", _nudBonusPrincipal);
+                return;
+            }
+            UpdateControlStates();
+            UpdatePreview();
+        }
 
-            FlowLayoutPanel months = new FlowLayoutPanel { AutoSize = true, Margin = new Padding(0) };
-            _cmbBonusMonth1 = CreateMonthCombo();
-            _cmbBonusMonth2 = CreateMonthCombo();
-            months.Controls.Add(_cmbBonusMonth1);
-            months.Controls.Add(new Label { Text = "月 と", AutoSize = true, Margin = new Padding(5, 6, 5, 0) });
-            months.Controls.Add(_cmbBonusMonth2);
-            months.Controls.Add(new Label { Text = "月", AutoSize = true, Margin = new Padding(5, 6, 0, 0) });
-            AddSimpleRow(table, 1, "ボーナス払い月", months);
-
-            Label note = new Label
+        private void RepaymentSettingModeChanged(object sender, EventArgs e)
+        {
+            if (_settings == null)
             {
-                AutoSize = true,
-                MaximumSize = new Size(820, 0),
-                Text = "借入額の一部をボーナス払い対象元金として分け、選択した返済方式の通常返済に加えて指定月に支払います。指定月までのボーナス分の利息は、ボーナス払い時にまとめて加算します。",
-                Margin = new Padding(3, 8, 3, 3)
-            };
-            table.Controls.Add(note, 0, 2);
-            table.SetColumnSpan(note, 2);
-            return group;
+                return;
+            }
+            UpdateControlStates();
+            UpdatePreview();
+        }
+
+        private void BonusPaymentFrequencyChanged(object sender, EventArgs e)
+        {
+            RadioButton radio = sender as RadioButton;
+            if (radio != null && !radio.Checked)
+            {
+                return;
+            }
+
+            if (_settings == null)
+            {
+                return;
+            }
+            UpdateControlStates();
+            UpdatePreview();
+        }
+
+        private void PreviewValueChanged(object sender, EventArgs e)
+        {
+            if (_settings != null)
+            {
+                UpdatePreview();
+            }
+        }
+
+        private void CalculateClicked(object sender, EventArgs e)
+        {
+            UpdatePreview();
         }
 
         private void LoadValues()
@@ -413,7 +151,7 @@ namespace LoanManagerApp.Forms
                 _nudDesiredMonthlyPayment,
                 Math.Max(1, loan.DesiredMonthlyPaymentAmount));
             _nudPaymentDay.Value = Math.Max(1, Math.Min(31, loan.MonthlyPaymentDay));
-            _chkUseBonusPayment.Checked = loan.UseBonusPayment;
+            SelectBonusPaymentFrequency(loan.BonusPaymentFrequency);
             SetNumericValue(_nudBonusPrincipal, Math.Max(1, loan.BonusPrincipalAmount));
             SelectValue(_cmbBonusMonth1, loan.BonusMonth1);
             SelectValue(_cmbBonusMonth2, loan.BonusMonth2);
@@ -440,7 +178,7 @@ namespace LoanManagerApp.Forms
                 RepaymentMonths = 12,
                 DesiredMonthlyPaymentAmount = 30000L,
                 MonthlyPaymentDay = firstDate.Day,
-                UseBonusPayment = false,
+                BonusPaymentFrequency = BonusPaymentFrequency.None,
                 BonusPrincipalAmount = 500000L,
                 BonusMonth1 = 6,
                 BonusMonth2 = 12,
@@ -451,7 +189,10 @@ namespace LoanManagerApp.Forms
         private void UpdateControlStates()
         {
             if (_grpBonus == null ||
-                _chkUseBonusPayment == null ||
+                _bonusFrequencyPanel == null ||
+                _rdoBonusNone == null ||
+                _rdoBonusOnce == null ||
+                _rdoBonusTwice == null ||
                 _txtPrincipal == null ||
                 _nudBonusPrincipal == null ||
                 _cmbRepaymentType == null ||
@@ -467,6 +208,10 @@ namespace LoanManagerApp.Forms
                 _cmbRepaymentType,
                 RepaymentType.EqualPayment);
             bool isLumpSum = type == RepaymentType.LumpSum;
+            BonusPaymentFrequency bonusFrequency =
+                GetSelectedBonusPaymentFrequency();
+            bool useBonusPayment =
+                bonusFrequency != BonusPaymentFrequency.None;
 
             if (isLumpSum &&
                 GetSelectedValue(
@@ -491,37 +236,121 @@ namespace LoanManagerApp.Forms
                 if (type == RepaymentType.EqualPrincipal)
                 {
                     _lblDesiredMonthlyAmount.Text = "毎月の元金返済額";
-                    _lblMonthlyPaymentNote.Text = _chkUseBonusPayment.Checked
-                        ? "円（利息・ボーナス払い分を除く）"
+                    _lblMonthlyPaymentNote.Text = useBonusPayment
+                        ? "円（利息を除く。ボーナス月は指定元金を加算）"
                         : "円（利息を除く）";
                 }
                 else
                 {
                     _lblDesiredMonthlyAmount.Text = "毎月のお支払い額";
-                    _lblMonthlyPaymentNote.Text = _chkUseBonusPayment.Checked
-                        ? "円（元金＋利息。ボーナス払い分を除く）"
+                    _lblMonthlyPaymentNote.Text = useBonusPayment
+                        ? "円（元金＋利息。ボーナス月は指定元金を加算）"
                         : "円（元金＋利息）";
                 }
             }
 
-            if (isLumpSum && _chkUseBonusPayment.Checked)
+            if (isLumpSum && useBonusPayment)
             {
-                _chkUseBonusPayment.Checked = false;
+                SelectBonusPaymentFrequency(BonusPaymentFrequency.None);
+                bonusFrequency = BonusPaymentFrequency.None;
+                useBonusPayment = false;
             }
 
-            _chkUseBonusPayment.Enabled = !isLumpSum;
-            _grpBonus.Visible = !isLumpSum && _chkUseBonusPayment.Checked;
+            _bonusFrequencyPanel.Enabled = !isLumpSum;
+            _grpBonus.Visible = !isLumpSum && useBonusPayment;
+            bool twicePerYear =
+                bonusFrequency == BonusPaymentFrequency.TwicePerYear;
+            _lblBonusMonthsSeparator.Visible = twicePerYear;
+            _cmbBonusMonth2.Visible = twicePerYear;
 
             long principalAmount;
             decimal bonusMaximum = _settings.MaximumLoanAmount;
             if (TryReadPrincipalAmount(out principalAmount))
             {
-                bonusMaximum = Math.Max(1L, principalAmount - 1L);
+                bonusMaximum = Math.Max(1L, principalAmount);
             }
             _nudBonusPrincipal.Maximum = Math.Max(1m, bonusMaximum);
             if (_nudBonusPrincipal.Value > _nudBonusPrincipal.Maximum)
             {
                 _nudBonusPrincipal.Value = _nudBonusPrincipal.Maximum;
+            }
+
+            AdjustLayoutForBonusPayment();
+        }
+
+        protected override void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            AdjustLayoutForBonusPayment();
+        }
+
+        private void AdjustLayoutForBonusPayment()
+        {
+            if (_adjustingLayout ||
+                _fields == null ||
+                _scrollPanel == null ||
+                _root == null ||
+                _lblPreview == null ||
+                _buttons == null)
+            {
+                return;
+            }
+
+            try
+            {
+                _adjustingLayout = true;
+
+                _fields.PerformLayout();
+                _root.PerformLayout();
+
+                int preferredFieldsHeight = _fields.PreferredSize.Height;
+                _scrollPanel.AutoScrollMinSize = new System.Drawing.Size(
+                    0,
+                    preferredFieldsHeight + 8);
+
+                if (!_grpBonus.Visible || !IsHandleCreated)
+                {
+                    return;
+                }
+
+                int previewHeight = Math.Max(
+                    _lblPreview.MinimumSize.Height,
+                    _lblPreview.PreferredHeight);
+                int buttonsHeight = Math.Max(
+                    60,
+                    _buttons.PreferredSize.Height);
+                int desiredClientHeight =
+                    _root.Padding.Vertical +
+                    preferredFieldsHeight +
+                    previewHeight +
+                    buttonsHeight +
+                    24;
+
+                System.Drawing.Rectangle workingArea =
+                    Screen.FromControl(this).WorkingArea;
+                int nonClientHeight = Height - ClientSize.Height;
+                int maximumClientHeight = Math.Max(
+                    1,
+                    workingArea.Height - nonClientHeight - 16);
+                int targetClientHeight = Math.Min(
+                    Math.Max(_normalClientHeight, desiredClientHeight),
+                    maximumClientHeight);
+
+                if (targetClientHeight > ClientSize.Height)
+                {
+                    ClientSize = new System.Drawing.Size(
+                        ClientSize.Width,
+                        targetClientHeight);
+
+                    if (Bottom > workingArea.Bottom)
+                    {
+                        Top = Math.Max(workingArea.Top, workingArea.Bottom - Height);
+                    }
+                }
+            }
+            finally
+            {
+                _adjustingLayout = false;
             }
         }
 
@@ -605,7 +434,7 @@ namespace LoanManagerApp.Forms
                 DesiredMonthlyPaymentAmount =
                     decimal.ToInt64(_nudDesiredMonthlyPayment.Value),
                 MonthlyPaymentDay = (int)_nudPaymentDay.Value,
-                UseBonusPayment = _chkUseBonusPayment.Checked,
+                BonusPaymentFrequency = GetSelectedBonusPaymentFrequency(),
                 BonusPrincipalAmount = decimal.ToInt64(_nudBonusPrincipal.Value),
                 BonusMonth1 = GetSelectedValue(_cmbBonusMonth1, 6),
                 BonusMonth2 = GetSelectedValue(_cmbBonusMonth2, 12),
@@ -673,94 +502,44 @@ namespace LoanManagerApp.Forms
                     throw new ArgumentException("一括返済ではボーナス払いを使用できません。");
                 }
 
-                if (loan.BonusMonth1 == loan.BonusMonth2)
+                if (loan.BonusPaymentFrequency == BonusPaymentFrequency.TwicePerYear &&
+                    loan.BonusMonth1 == loan.BonusMonth2)
                 {
-                    throw new ArgumentException("ボーナス払い月は異なる月を指定してください。");
+                    throw new ArgumentException("年2回のボーナス払い月は異なる月を指定してください。");
                 }
 
-                if (loan.BonusPrincipalAmount <= 0 || loan.BonusPrincipalAmount >= loan.PrincipalAmount)
+                if (loan.BonusPrincipalAmount <= 0 ||
+                    loan.BonusPrincipalAmount > loan.PrincipalAmount)
                 {
-                    throw new ArgumentException("ボーナス払い対象元金は借入額未満で入力してください。");
+                    throw new ArgumentException(
+                        "1回あたりのボーナス加算元金は借入額以下で入力してください。");
                 }
             }
         }
 
-        private static Label AddField(
-            TableLayoutPanel table,
-            ref int row,
-            string labelText,
-            Control control,
-            string note)
+        private BonusPaymentFrequency GetSelectedBonusPaymentFrequency()
         {
-            Label fieldLabel;
-            return AddField(table, ref row, labelText, control, note, out fieldLabel);
-        }
-
-        private static Label AddField(
-            TableLayoutPanel table,
-            ref int row,
-            string labelText,
-            Control control,
-            string note,
-            out Label fieldLabel)
-        {
-            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            fieldLabel = new Label
+            if (_rdoBonusTwice.Checked)
             {
-                Text = labelText,
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(3, 10, 3, 10)
-            };
-            control.Margin = new Padding(3, 6, 3, 6);
-            Label noteLabel = new Label
-            {
-                Text = note,
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(3, 10, 3, 10)
-            };
-            table.Controls.Add(fieldLabel, 0, row);
-            table.Controls.Add(control, 1, row);
-            table.Controls.Add(noteLabel, 2, row);
-            row++;
-            return noteLabel;
-        }
-
-        private static void AddSimpleRow(TableLayoutPanel table, int row, string labelText, Control control)
-        {
-            table.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            table.Controls.Add(new Label
-            {
-                Text = labelText,
-                AutoSize = true,
-                Anchor = AnchorStyles.Left,
-                Margin = new Padding(3, 8, 3, 8)
-            }, 0, row);
-            control.Margin = new Padding(3, 5, 3, 5);
-            table.Controls.Add(control, 1, row);
-        }
-
-        private ComboBox CreateDropDown()
-        {
-            return new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Dock = DockStyle.Left,
-                Width = 310,
-                Font = _inputFont
-            };
-        }
-
-        private ComboBox CreateMonthCombo()
-        {
-            ComboBox combo = CreateDropDown();
-            combo.Width = 85;
-            for (int month = 1; month <= 12; month++)
-            {
-                AddNamedItem(combo, month.ToString(), month);
+                return BonusPaymentFrequency.TwicePerYear;
             }
-            return combo;
+
+            if (_rdoBonusOnce.Checked)
+            {
+                return BonusPaymentFrequency.OncePerYear;
+            }
+
+            return BonusPaymentFrequency.None;
+        }
+
+        private void SelectBonusPaymentFrequency(BonusPaymentFrequency frequency)
+        {
+            _rdoBonusNone.Checked =
+                frequency == BonusPaymentFrequency.None;
+            _rdoBonusOnce.Checked =
+                frequency == BonusPaymentFrequency.OncePerYear;
+            _rdoBonusTwice.Checked =
+                frequency == BonusPaymentFrequency.TwicePerYear;
         }
 
         private static void AddNamedItem<T>(ComboBox combo, string name, T value)
@@ -831,7 +610,7 @@ namespace LoanManagerApp.Forms
             UpdatePreview();
         }
 
-        private static void PrincipalKeyPress(object sender, KeyPressEventArgs e)
+        private void PrincipalKeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
             {
@@ -916,16 +695,6 @@ namespace LoanManagerApp.Forms
             return remainingMonths + "か月";
         }
 
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            if (disposing && _inputFont != null)
-            {
-                _inputFont.Dispose();
-                _inputFont = null;
-            }
-        }
 
         private sealed class NamedValue<T>
         {

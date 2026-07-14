@@ -27,7 +27,7 @@ namespace LoanManagerApp.Services
             if (loan.RepaymentType == RepaymentType.LumpSum)
             {
                 loan.RepaymentSettingMode = RepaymentSettingMode.ByPeriod;
-                loan.UseBonusPayment = false;
+                loan.BonusPaymentFrequency = BonusPaymentFrequency.None;
                 return CalculateLumpSum(loan);
             }
 
@@ -101,16 +101,17 @@ namespace LoanManagerApp.Services
                     throw new ArgumentException("一括返済ではボーナス払いを使用できません。");
                 }
 
-                if (loan.BonusMonth1 == loan.BonusMonth2)
+                if (loan.BonusPaymentFrequency == BonusPaymentFrequency.TwicePerYear &&
+                    loan.BonusMonth1 == loan.BonusMonth2)
                 {
-                    throw new ArgumentException("ボーナス払い月は異なる月を指定してください。");
+                    throw new ArgumentException("年2回のボーナス払い月は異なる月を指定してください。");
                 }
 
                 if (loan.BonusPrincipalAmount <= 0 ||
-                    loan.BonusPrincipalAmount >= loan.PrincipalAmount)
+                    loan.BonusPrincipalAmount > loan.PrincipalAmount)
                 {
                     throw new ArgumentException(
-                        "ボーナス払い対象元金は借入額より小さい1円以上の金額を指定してください。");
+                        "1回あたりのボーナス加算元金は、借入額以下の1円以上で指定してください。");
                 }
             }
         }
@@ -119,35 +120,90 @@ namespace LoanManagerApp.Services
             Loan loan,
             int maximumRepaymentMonths)
         {
-            long normalPrincipal = GetNormalPrincipal(loan);
-            int months;
+            if (loan.UseBonusPayment)
+            {
+                return ResolveRepaymentMonthsWithBonus(loan, maximumRepaymentMonths);
+            }
 
             switch (loan.RepaymentType)
             {
                 case RepaymentType.EqualPrincipal:
-                    months = ResolveEqualPrincipalMonths(
+                    return ResolveEqualPrincipalMonths(
                         loan,
-                        normalPrincipal,
+                        loan.PrincipalAmount,
                         maximumRepaymentMonths);
-                    break;
                 default:
-                    months = ResolveFixedPaymentMonths(
+                    return ResolveFixedPaymentMonths(
                         loan,
-                        normalPrincipal,
+                        loan.PrincipalAmount,
                         maximumRepaymentMonths);
-                    break;
             }
-
-            return loan.UseBonusPayment
-                ? EnsureBonusMonthExists(loan, months, maximumRepaymentMonths)
-                : months;
         }
 
-        private static long GetNormalPrincipal(Loan loan)
+        private static int ResolveRepaymentMonthsWithBonus(
+            Loan loan,
+            int maximumRepaymentMonths)
         {
-            return loan.UseBonusPayment
-                ? loan.PrincipalAmount - loan.BonusPrincipalAmount
-                : loan.PrincipalAmount;
+            long remaining = loan.PrincipalAmount;
+            DateTime previousDate = loan.BorrowDate.Date;
+            bool bonusApplied = false;
+
+            for (int index = 0; index < maximumRepaymentMonths; index++)
+            {
+                ScheduleDate date = CreateScheduleDate(loan, index);
+                long interest = CalculateInterest(
+                    loan,
+                    remaining,
+                    previousDate,
+                    date.PaymentDate,
+                    1);
+                long normalPrincipal;
+
+                if (loan.RepaymentType == RepaymentType.EqualPrincipal)
+                {
+                    normalPrincipal = Math.Min(
+                        loan.DesiredMonthlyPaymentAmount,
+                        remaining);
+                }
+                else
+                {
+                    if (loan.DesiredMonthlyPaymentAmount < interest)
+                    {
+                        throw new ArgumentException(
+                            "毎月のお支払い額が利息を下回るため返済できません。お支払い額を増やしてください。");
+                    }
+
+                    normalPrincipal = Math.Min(
+                        loan.DesiredMonthlyPaymentAmount - interest,
+                        remaining);
+                }
+
+                long bonusPrincipal = 0;
+                if (IsBonusMonth(loan, date.TargetMonth.Month))
+                {
+                    bonusPrincipal = Math.Min(
+                        loan.BonusPrincipalAmount,
+                        remaining - normalPrincipal);
+                    bonusApplied = bonusApplied || bonusPrincipal > 0;
+                }
+
+                remaining -= checked(normalPrincipal + bonusPrincipal);
+                if (remaining <= 0)
+                {
+                    if (!bonusApplied)
+                    {
+                        throw new ArgumentException(
+                            "完済までの返済期間内にボーナス払いがありません。ボーナス月または毎月の金額を見直してください。");
+                    }
+
+                    return index + 1;
+                }
+
+                previousDate = date.PaymentDate;
+            }
+
+            throw new ArgumentException(
+                "指定した毎月の金額では最大返済期間内に完済できません。金額を増やしてください。");
         }
 
         private static int ResolveFixedPaymentMonths(
@@ -212,29 +268,6 @@ namespace LoanManagerApp.Services
             }
 
             return (int)monthsLong;
-        }
-
-        private static int EnsureBonusMonthExists(
-            Loan loan,
-            int repaymentMonths,
-            int maximumRepaymentMonths)
-        {
-            int months = repaymentMonths;
-            while (months <= maximumRepaymentMonths)
-            {
-                for (int index = 0; index < months; index++)
-                {
-                    int month = CreateScheduleDate(loan, index).TargetMonth.Month;
-                    if (month == loan.BonusMonth1 || month == loan.BonusMonth2)
-                    {
-                        return months;
-                    }
-                }
-
-                months++;
-            }
-
-            throw new ArgumentException("最大返済期間内にボーナス払い月を設定できません。");
         }
 
         private static ScheduleDate CreateScheduleDate(Loan loan, int index)
@@ -423,146 +456,224 @@ namespace LoanManagerApp.Services
             Loan loan,
             IList<ScheduleDate> dates)
         {
-            List<int> bonusIndexes = dates
-                .Select((value, index) => new { value, index })
-                .Where(x => x.value.TargetMonth.Month == loan.BonusMonth1 ||
-                            x.value.TargetMonth.Month == loan.BonusMonth2)
-                .Select(x => x.index)
-                .ToList();
-
-            if (bonusIndexes.Count == 0)
+            if (!dates.Any(x => IsBonusMonth(loan, x.TargetMonth.Month)))
             {
                 throw new ArgumentException("返済期間内にボーナス払い月がありません。");
             }
 
-            long normalPrincipalAmount = loan.PrincipalAmount - loan.BonusPrincipalAmount;
-            long normalRemaining = normalPrincipalAmount;
-            long bonusRemaining = loan.BonusPrincipalAmount;
+            long regularPayment = 0;
+            long regularPrincipal = 0;
 
-            long normalRegularPayment = 0;
-            long normalRegularPrincipal = 0;
             if (loan.RepaymentType == RepaymentType.EqualPrincipal)
             {
-                normalRegularPrincipal = loan.RepaymentSettingMode ==
-                                         RepaymentSettingMode.ByMonthlyPayment
-                    ? loan.DesiredMonthlyPaymentAmount
-                    : RoundingHelper.RoundToYen(
-                        (decimal)normalPrincipalAmount / dates.Count);
-                if (normalPrincipalAmount > 0 && normalRegularPrincipal < 1)
+                if (loan.RepaymentSettingMode == RepaymentSettingMode.ByMonthlyPayment)
                 {
-                    normalRegularPrincipal = 1;
+                    regularPrincipal = loan.DesiredMonthlyPaymentAmount;
+                }
+                else
+                {
+                    int bonusCount = dates.Count(
+                        x => IsBonusMonth(loan, x.TargetMonth.Month));
+                    decimal plannedBonusRaw =
+                        (decimal)loan.BonusPrincipalAmount * bonusCount;
+                    long plannedBonus = plannedBonusRaw >= loan.PrincipalAmount
+                        ? loan.PrincipalAmount
+                        : decimal.ToInt64(plannedBonusRaw);
+                    long normalPrincipalTotal = loan.PrincipalAmount - plannedBonus;
+                    regularPrincipal = RoundingHelper.RoundToYen(
+                        (decimal)normalPrincipalTotal / dates.Count);
+                    if (normalPrincipalTotal > 0 && regularPrincipal < 1)
+                    {
+                        regularPrincipal = 1;
+                    }
                 }
             }
             else
             {
-                normalRegularPayment = loan.RepaymentSettingMode ==
-                                       RepaymentSettingMode.ByMonthlyPayment
+                regularPayment = loan.RepaymentSettingMode ==
+                                 RepaymentSettingMode.ByMonthlyPayment
                     ? loan.DesiredMonthlyPaymentAmount
-                    : CalculateRegularEqualPayment(
-                        loan,
-                        normalPrincipalAmount,
-                        dates);
+                    : CalculateRegularEqualPaymentWithBonus(loan, dates);
             }
 
-            long bonusRegularPrincipal = RoundingHelper.RoundToYen(
-                (decimal)loan.BonusPrincipalAmount / bonusIndexes.Count);
-            if (bonusRegularPrincipal < 1)
-            {
-                bonusRegularPrincipal = 1;
-            }
-
-            List<RepaymentScheduleItem> result = new List<RepaymentScheduleItem>();
+            List<RepaymentScheduleItem> result =
+                new List<RepaymentScheduleItem>();
+            long remaining = loan.PrincipalAmount;
             DateTime previousDate = loan.BorrowDate.Date;
-            decimal accruedBonusInterestRaw = 0m;
+            bool bonusApplied = false;
 
-            for (int i = 0; i < dates.Count; i++)
+            for (int i = 0; i < dates.Count && remaining > 0; i++)
             {
                 ScheduleDate date = dates[i];
-                long normalInterest = CalculateInterest(
+                long interest = CalculateInterest(
                     loan,
-                    normalRemaining,
+                    remaining,
                     previousDate,
                     date.PaymentDate,
                     1);
-                decimal bonusInterestRaw = CalculateInterestRaw(
-                    loan,
-                    bonusRemaining,
-                    previousDate,
-                    date.PaymentDate,
-                    1);
-                accruedBonusInterestRaw += bonusInterestRaw;
-
                 long normalPrincipal;
-                long normalRepayment;
-                if (normalRemaining <= 0)
+
+                if (loan.RepaymentType == RepaymentType.EqualPrincipal)
                 {
-                    normalPrincipal = 0;
-                    normalInterest = 0;
-                    normalRepayment = 0;
-                }
-                else if (loan.RepaymentType == RepaymentType.EqualPrincipal)
-                {
-                    normalPrincipal = i == dates.Count - 1
-                        ? normalRemaining
-                        : Math.Min(normalRegularPrincipal, normalRemaining);
-                    normalRepayment = checked(normalPrincipal + normalInterest);
-                }
-                else if (i == dates.Count - 1)
-                {
-                    normalPrincipal = normalRemaining;
-                    normalRepayment = checked(normalPrincipal + normalInterest);
+                    normalPrincipal = Math.Min(regularPrincipal, remaining);
                 }
                 else
                 {
-                    normalRepayment = normalRegularPayment;
-                    normalPrincipal = normalRepayment - normalInterest;
-                    if (normalPrincipal <= 0)
+                    if (regularPayment < interest)
                     {
-                        normalPrincipal = 1;
-                        normalRepayment = checked(normalInterest + normalPrincipal);
+                        throw new ArgumentException(
+                            "通常月のお支払い額が利息を下回るため返済できません。");
                     }
 
-                    if (normalPrincipal > normalRemaining)
-                    {
-                        normalPrincipal = normalRemaining;
-                        normalRepayment = checked(normalPrincipal + normalInterest);
-                    }
+                    normalPrincipal = Math.Min(
+                        regularPayment - interest,
+                        remaining);
                 }
 
-                bool isBonusMonth = bonusIndexes.Contains(i);
                 long bonusPrincipal = 0;
-                long bonusInterest = 0;
-                long bonusPayment = 0;
-
-                if (isBonusMonth)
+                if (IsBonusMonth(loan, date.TargetMonth.Month))
                 {
-                    bool isLastBonus = i == bonusIndexes[bonusIndexes.Count - 1];
-                    bonusPrincipal = isLastBonus
-                        ? bonusRemaining
-                        : Math.Min(bonusRegularPrincipal, bonusRemaining);
-                    bonusInterest = RoundingHelper.RoundToYen(accruedBonusInterestRaw);
-                    bonusPayment = checked(bonusPrincipal + bonusInterest);
-                    accruedBonusInterestRaw = 0m;
+                    bonusPrincipal = Math.Min(
+                        loan.BonusPrincipalAmount,
+                        remaining - normalPrincipal);
+                    bonusApplied = bonusApplied || bonusPrincipal > 0;
                 }
 
-                normalRemaining -= normalPrincipal;
-                bonusRemaining -= bonusPrincipal;
+                bool isLastScheduledPayment = i == dates.Count - 1;
+                long paidPrincipal = checked(normalPrincipal + bonusPrincipal);
+                if (isLastScheduledPayment && paidPrincipal < remaining)
+                {
+                    normalPrincipal += remaining - paidPrincipal;
+                    paidPrincipal = remaining;
+                }
 
-                long totalPrincipal = checked(normalPrincipal + bonusPrincipal);
-                long totalInterest = checked(normalInterest + bonusInterest);
-                long paymentAmount = checked(normalRepayment + bonusPayment);
-                long totalRemaining = checked(normalRemaining + bonusRemaining);
+                remaining -= paidPrincipal;
+                long paymentAmount = checked(paidPrincipal + interest);
 
                 result.Add(CreateItem(
                     date,
-                    totalPrincipal,
+                    paidPrincipal,
                     paymentAmount,
-                    totalInterest,
-                    totalRemaining));
+                    interest,
+                    remaining));
                 previousDate = date.PaymentDate;
             }
 
+            if (!bonusApplied)
+            {
+                throw new ArgumentException(
+                    "返済期間内に実際のボーナス加算がありません。ボーナス月または返済条件を見直してください。");
+            }
+
+            if (remaining > 0)
+            {
+                throw new ArgumentException(
+                    "指定した条件では返済期間内に完済できません。");
+            }
+
+            loan.RepaymentMonths = result.Count;
             return result;
+        }
+
+        private static long CalculateRegularEqualPaymentWithBonus(
+            Loan loan,
+            IList<ScheduleDate> dates)
+        {
+            long lower = 0;
+            long maximumInterest = 0;
+            DateTime previousDate = loan.BorrowDate.Date;
+
+            foreach (ScheduleDate date in dates)
+            {
+                long interest = CalculateInterest(
+                    loan,
+                    loan.PrincipalAmount,
+                    previousDate,
+                    date.PaymentDate,
+                    1);
+                maximumInterest = Math.Max(maximumInterest, interest);
+                previousDate = date.PaymentDate;
+            }
+
+            long upper = checked(loan.PrincipalAmount + maximumInterest + 1L);
+            while (lower < upper)
+            {
+                long middle = lower + (upper - lower) / 2L;
+                if (CanCompleteWithBonus(loan, dates, middle))
+                {
+                    upper = middle;
+                }
+                else
+                {
+                    lower = middle + 1L;
+                }
+            }
+
+            if (!CanCompleteWithBonus(loan, dates, lower))
+            {
+                throw new ArgumentException(
+                    "指定した返済期間では返済額を算出できません。");
+            }
+
+            return lower;
+        }
+
+        private static bool CanCompleteWithBonus(
+            Loan loan,
+            IList<ScheduleDate> dates,
+            long regularPayment)
+        {
+            long remaining = loan.PrincipalAmount;
+            DateTime previousDate = loan.BorrowDate.Date;
+
+            foreach (ScheduleDate date in dates)
+            {
+                if (remaining <= 0)
+                {
+                    return true;
+                }
+
+                long interest = CalculateInterest(
+                    loan,
+                    remaining,
+                    previousDate,
+                    date.PaymentDate,
+                    1);
+                if (regularPayment < interest)
+                {
+                    return false;
+                }
+
+                long normalPrincipal = Math.Min(
+                    regularPayment - interest,
+                    remaining);
+                long bonusPrincipal = IsBonusMonth(
+                    loan,
+                    date.TargetMonth.Month)
+                    ? Math.Min(
+                        loan.BonusPrincipalAmount,
+                        remaining - normalPrincipal)
+                    : 0;
+                remaining -= checked(normalPrincipal + bonusPrincipal);
+                previousDate = date.PaymentDate;
+            }
+
+            return remaining <= 0;
+        }
+
+        private static bool IsBonusMonth(Loan loan, int month)
+        {
+            if (loan.BonusPaymentFrequency == BonusPaymentFrequency.OncePerYear)
+            {
+                return month == loan.BonusMonth1;
+            }
+
+            if (loan.BonusPaymentFrequency == BonusPaymentFrequency.TwicePerYear)
+            {
+                return month == loan.BonusMonth1 || month == loan.BonusMonth2;
+            }
+
+            return false;
         }
 
         private static long CalculateRegularEqualPayment(

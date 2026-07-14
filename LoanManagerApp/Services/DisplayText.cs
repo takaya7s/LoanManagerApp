@@ -42,9 +42,17 @@ namespace LoanManagerApp.Services
                 : "返済期間で設定";
         }
 
-        public static string BonusPayment(bool value)
+        public static string BonusPayment(BonusPaymentFrequency value)
         {
-            return value ? "あり" : "なし";
+            switch (value)
+            {
+                case BonusPaymentFrequency.OncePerYear:
+                    return "年1回";
+                case BonusPaymentFrequency.TwicePerYear:
+                    return "年2回";
+                default:
+                    return "なし";
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -11,184 +12,68 @@ using LoanManagerApp.Services;
 
 namespace LoanManagerApp.Forms
 {
-    public sealed class MainForm : Form
+    [DesignerCategory("Form")]
+    public sealed partial class MainForm : Form
     {
         private readonly AppSettings _settings;
         private readonly LoanRepository _repository;
 
-        private DataGridView _loanGrid;
-        private DataGridView _scheduleGrid;
-        private CheckBox _chkRemainingOnly;
-        private Button _btnFailure;
-        private TextBox _txtDetails;
-        private Label _lblScheduleSummary;
-        private ToolStripStatusLabel _statusLabel;
-        private SplitContainer _mainSplit;
+        private DateTime _simulationDate = DateTime.Today;
+        private bool _updatingSimulationDate;
         private long? _selectedLoanId;
 
-        public MainForm(AppSettings settings, LoanRepository repository)
+        // Visual Studioデザイナー用。アプリケーションからは使用しません。
+        public MainForm()
         {
-            _settings = settings;
-            _repository = repository;
-            InitializeForm();
-            CreateControls();
+            InitializeComponent();
+        }
+
+        public MainForm(AppSettings settings, LoanRepository repository)
+            : this()
+        {
+            _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+            _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+
+            _colLoanAnnualInterestRate.DefaultCellStyle.Format = CreateInterestRateFormat();
+
+            _updatingSimulationDate = true;
+            try
+            {
+                _simulationDate = DateTime.Today;
+                _dtpSimulationDate.Value = _simulationDate;
+            }
+            finally
+            {
+                _updatingSimulationDate = false;
+            }
+
+            UpdateSimulationVisualState();
             Shown += delegate { ApplyMainSplitLayout(); };
             LoadLoanList(null);
         }
 
-        private void InitializeForm()
+        private void RefreshLoanList(object sender, EventArgs e)
         {
-            Text = "ローン管理アプリ";
-            StartPosition = FormStartPosition.CenterScreen;
-            Size = new Size(1360, 880);
-            MinimumSize = new Size(1080, 700);
-            AutoScaleMode = AutoScaleMode.Dpi;
-            Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
+            if (_repository != null)
+            {
+                LoadLoanList(_selectedLoanId);
+            }
         }
 
-        private void CreateControls()
+        private void LoanGridCellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            TableLayoutPanel shell = new TableLayoutPanel
+            if (e.RowIndex >= 0)
             {
-                Dock = DockStyle.Fill,
-                ColumnCount = 1,
-                RowCount = 3,
-                Margin = new Padding(0),
-                Padding = new Padding(0)
-            };
-            shell.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            shell.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            shell.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            Controls.Add(shell);
+                EditLoan(sender, EventArgs.Empty);
+            }
+        }
 
-            ToolStrip toolbar = new ToolStrip
+        private void RemainingOnlyCheckedChanged(object sender, EventArgs e)
+        {
+            if (_repository != null)
             {
-                GripStyle = ToolStripGripStyle.Hidden,
-                Padding = new Padding(6),
-                ImageScalingSize = new Size(24, 24),
-                Font = this.Font
-            };
-            ToolStripButton addButton = new ToolStripButton("新規登録");
-            ToolStripButton editButton = new ToolStripButton("編集");
-            ToolStripButton deleteButton = new ToolStripButton("削除");
-            ToolStripButton refreshButton = new ToolStripButton("再読み込み");
-            ToolStripButton openDataButton = new ToolStripButton("データ保存先");
-            addButton.Click += AddLoan;
-            editButton.Click += EditLoan;
-            deleteButton.Click += DeleteLoan;
-            refreshButton.Click += delegate { LoadLoanList(_selectedLoanId); };
-            openDataButton.Click += OpenDataFolder;
-            toolbar.Items.AddRange(new ToolStripItem[]
-            {
-                addButton,
-                editButton,
-                deleteButton,
-                new ToolStripSeparator(),
-                refreshButton,
-                new ToolStripSeparator(),
-                openDataButton
-            });
-
-            _mainSplit = new SplitContainer
-            {
-                Dock = DockStyle.Fill,
-                Orientation = Orientation.Horizontal
-            };
-            shell.Controls.Add(_mainSplit, 0, 1);
-
-            _loanGrid = CreateGrid();
-            ConfigureLoanGrid(_loanGrid);
-            _loanGrid.SelectionChanged += LoanSelectionChanged;
-            _loanGrid.CellDoubleClick += delegate { EditLoan(this, EventArgs.Empty); };
-            _mainSplit.Panel1.Controls.Add(_loanGrid);
-
-            TabControl tabs = new TabControl { Dock = DockStyle.Fill };
-            TabPage scheduleTab = new TabPage("返済スケジュール");
-            TabPage detailTab = new TabPage("ローン詳細");
-            tabs.TabPages.Add(scheduleTab);
-            tabs.TabPages.Add(detailTab);
-            _mainSplit.Panel2.Controls.Add(tabs);
-
-            TableLayoutPanel scheduleRoot = new TableLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                RowCount = 3,
-                ColumnCount = 1,
-                Padding = new Padding(8)
-            };
-            scheduleRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            scheduleRoot.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            scheduleRoot.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            scheduleTab.Controls.Add(scheduleRoot);
-
-            FlowLayoutPanel scheduleTools = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = true,
-                WrapContents = false
-            };
-            _chkRemainingOnly = new CheckBox
-            {
-                Text = "残りの返済のみ表示",
-                Checked = true,
-                AutoSize = true,
-                Margin = new Padding(3, 8, 16, 3)
-            };
-            _chkRemainingOnly.CheckedChanged += delegate { LoadSelectedSchedule(); };
-            _btnFailure = new Button
-            {
-                Text = "入金失敗を登録",
-                AutoSize = true,
-                MinimumSize = new Size(160, 42)
-            };
-            _btnFailure.Click += TogglePaymentFailure;
-            scheduleTools.Controls.Add(_chkRemainingOnly);
-            scheduleTools.Controls.Add(_btnFailure);
-            scheduleRoot.Controls.Add(scheduleTools, 0, 0);
-
-            _scheduleGrid = CreateGrid();
-            ConfigureScheduleGrid(_scheduleGrid);
-            _scheduleGrid.SelectionChanged += ScheduleSelectionChanged;
-            scheduleRoot.Controls.Add(_scheduleGrid, 0, 1);
-
-            _lblScheduleSummary = new Label
-            {
-                Dock = DockStyle.Fill,
-                AutoSize = true,
-                Padding = new Padding(4, 8, 4, 0),
-                Text = "ローンを選択してください。"
-            };
-            scheduleRoot.Controls.Add(_lblScheduleSummary, 0, 2);
-
-            _txtDetails = new TextBox
-            {
-                Dock = DockStyle.Fill,
-                Multiline = true,
-                ReadOnly = true,
-                ScrollBars = ScrollBars.Vertical,
-                BorderStyle = BorderStyle.None,
-                BackColor = SystemColors.Window,
-                Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point),
-                Padding = new Padding(12)
-            };
-            detailTab.Controls.Add(_txtDetails);
-
-            StatusStrip status = new StatusStrip
-            {
-                Font = this.Font
-            };
-            _statusLabel = new ToolStripStatusLabel
-            {
-                Spring = true,
-                TextAlign = ContentAlignment.MiddleLeft
-            };
-            status.Items.Add(_statusLabel);
-            toolbar.Dock = DockStyle.Fill;
-            status.Dock = DockStyle.Fill;
-            shell.Controls.Add(toolbar, 0, 0);
-            shell.Controls.Add(status, 0, 2);
-
+                LoadSelectedSchedule();
+            }
         }
 
         private void ApplyMainSplitLayout()
@@ -237,7 +122,7 @@ namespace LoanManagerApp.Forms
         {
             try
             {
-                IList<LoanListItem> items = _repository.GetLoanListItems(DateTime.Today);
+                IList<LoanListItem> items = _repository.GetLoanListItems(_simulationDate);
                 _loanGrid.DataSource = items.ToList();
                 _statusLabel.Text = string.Format(
                     "登録ローン: {0}件　　ログ: {1}",
@@ -285,6 +170,11 @@ namespace LoanManagerApp.Forms
 
         private void LoanSelectionChanged(object sender, EventArgs e)
         {
+            if (_repository == null)
+            {
+                return;
+            }
+
             LoanListItem item = GetSelectedLoanListItem();
             _selectedLoanId = item == null ? (long?)null : item.Id;
             LoadSelectedSchedule();
@@ -301,16 +191,17 @@ namespace LoanManagerApp.Forms
 
             try
             {
+                DateTime referenceDate = _simulationDate.Date;
                 IList<RepaymentScheduleItem> fullSchedule = _repository.GetSchedule(_selectedLoanId.Value);
                 IEnumerable<RepaymentScheduleItem> displaySchedule = fullSchedule;
                 if (_chkRemainingOnly.Checked)
                 {
                     displaySchedule = displaySchedule.Where(
-                        x => x.PaymentDate.Date >= DateTime.Today || x.IsPaymentFailed);
+                        x => x.PaymentDate.Date >= referenceDate || x.IsPaymentFailed);
                 }
 
                 List<ScheduleViewItem> views = displaySchedule
-                    .Select(CreateScheduleViewItem)
+                    .Select(x => CreateScheduleViewItem(x, referenceDate))
                     .ToList();
                 _scheduleGrid.DataSource = views;
 
@@ -318,8 +209,11 @@ namespace LoanManagerApp.Forms
                 long totalInterest = fullSchedule.Sum(x => x.InterestAmount);
                 long totalPayment = fullSchedule.Sum(x => x.PaymentAmount);
                 int remainingCount = fullSchedule.Count(
-                    x => x.PaymentDate.Date >= DateTime.Today || x.IsPaymentFailed);
-                _lblScheduleSummary.Text = string.Format(
+                    x => x.PaymentDate.Date >= referenceDate || x.IsPaymentFailed);
+                string referenceDateText = IsSimulationActive()
+                    ? "【日付シミュレーション基準日: " + referenceDate.ToString("yyyy年MM月dd日") + "】\r\n"
+                    : string.Empty;
+                _lblScheduleSummary.Text = referenceDateText + string.Format(
                     "返済額（元金）合計: {0:N0}円　利息合計: {1:N0}円　総お支払い額: {2:N0}円　残回数: {3}回\r\n" +
                     "※返済額は残高から減る元金、お支払い額は返済額＋利息です。ボーナス月はボーナス分も含みます。",
                     totalPrincipal,
@@ -394,12 +288,15 @@ namespace LoanManagerApp.Forms
                 builder.AppendLine("総返済額（元金）　" + totalRepaymentAmount.ToString("N0") + "円");
                 builder.AppendLine("利息合計　　　　　" + totalInterestAmount.ToString("N0") + "円");
                 builder.AppendLine("総お支払い額　　　" + totalPaymentAmount.ToString("N0") + "円");
-                builder.AppendLine("ボーナス払い　　　" + DisplayText.BonusPayment(loan.UseBonusPayment));
+                builder.AppendLine("ボーナス払い　　　" + DisplayText.BonusPayment(loan.BonusPaymentFrequency));
 
                 if (loan.UseBonusPayment)
                 {
-                    builder.AppendLine("ボーナス対象元金　" + loan.BonusPrincipalAmount.ToString("N0") + "円");
-                    builder.AppendLine("ボーナス払い月　　" + loan.BonusMonth1 + "月・" + loan.BonusMonth2 + "月");
+                    builder.AppendLine("ボーナス加算元金　" + loan.BonusPrincipalAmount.ToString("N0") + "円／回");
+                    string bonusMonths = loan.BonusPaymentFrequency == BonusPaymentFrequency.OncePerYear
+                        ? loan.BonusMonth1 + "月"
+                        : loan.BonusMonth1 + "月・" + loan.BonusMonth2 + "月";
+                    builder.AppendLine("ボーナス払い月　　" + bonusMonths);
                 }
 
                 builder.AppendLine("登録日時　　　　　" + loan.CreatedAt.ToString("yyyy年MM月dd日 HH:mm:ss"));
@@ -565,6 +462,79 @@ namespace LoanManagerApp.Forms
             }
         }
 
+        private void SimulationDateChanged(object sender, EventArgs e)
+        {
+            if (_updatingSimulationDate)
+            {
+                return;
+            }
+
+            _simulationDate = _dtpSimulationDate.Value.Date;
+            UpdateSimulationVisualState();
+            if (_repository != null)
+            {
+                LoadLoanList(_selectedLoanId);
+            }
+        }
+
+        private void ResetSimulationDate(object sender, EventArgs e)
+        {
+            SetSimulationDate(DateTime.Today);
+        }
+
+        private void SetSimulationDate(DateTime date)
+        {
+            DateTime normalizedDate = date.Date;
+            _updatingSimulationDate = true;
+            try
+            {
+                _simulationDate = normalizedDate;
+                _dtpSimulationDate.Value = normalizedDate;
+            }
+            finally
+            {
+                _updatingSimulationDate = false;
+            }
+
+            UpdateSimulationVisualState();
+            if (_repository != null)
+            {
+                LoadLoanList(_selectedLoanId);
+            }
+        }
+
+        private bool IsSimulationActive()
+        {
+            return _simulationDate.Date != DateTime.Today;
+        }
+
+        private void UpdateSimulationVisualState()
+        {
+            if (_simulationPanel == null || _lblSimulationState == null ||
+                _btnResetSimulationDate == null || _scheduleTab == null)
+            {
+                return;
+            }
+
+            bool active = IsSimulationActive();
+            if (active)
+            {
+                _lblSimulationState.Text = "● シミュレーション中";
+                _lblSimulationState.ForeColor = Color.DarkRed;
+                _simulationPanel.BackColor = Color.LightGoldenrodYellow;
+                _scheduleTab.Text = "返済スケジュール【シミュレーション中】";
+            }
+            else
+            {
+                _lblSimulationState.Text = "本日基準";
+                _lblSimulationState.ForeColor = SystemColors.ControlText;
+                _simulationPanel.BackColor = SystemColors.Control;
+                _scheduleTab.Text = "返済スケジュール";
+            }
+
+            _btnResetSimulationDate.Enabled = active;
+        }
+
         private void ScheduleSelectionChanged(object sender, EventArgs e)
         {
             ScheduleViewItem selected = GetSelectedScheduleViewItem();
@@ -610,130 +580,20 @@ namespace LoanManagerApp.Forms
             return _scheduleGrid.CurrentRow.DataBoundItem as ScheduleViewItem;
         }
 
-        private static DataGridView CreateGrid()
-        {
-            DataGridView grid = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                AllowUserToDeleteRows = false,
-                AllowUserToResizeRows = false,
-                MultiSelect = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                AutoGenerateColumns = false,
-                RowHeadersVisible = false,
-                BackgroundColor = SystemColors.Window,
-                BorderStyle = BorderStyle.Fixed3D,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
-                ColumnHeadersHeight = 40,
-                ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing,
-                Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point)
-            };
-            grid.RowTemplate.Height = 34;
-            return grid;
-        }
-
-        private void ConfigureLoanGrid(DataGridView grid)
-        {
-            grid.Columns.Add(TextColumn("Name", "ローン名称", 190));
-            grid.Columns.Add(TextColumn("RepaymentTypeName", "返済方式", 170));
-            grid.Columns.Add(TextColumn("BonusPaymentName", "ボーナス払い", 105));
-            grid.Columns.Add(NumberColumn("PrincipalAmount", "借入額", 120, "#,##0円"));
-            grid.Columns.Add(NumberColumn(
-                "AnnualInterestRate",
-                "年利(%)",
-                75,
-                CreateInterestRateFormat()));
-            grid.Columns.Add(DateColumn("NextPaymentDate", "次回返済日", 110));
-            DataGridViewTextBoxColumn nextPaymentColumn = NumberColumn(
-                "NextPaymentAmount",
-                "お支払い額",
-                120,
-                "#,##0円");
-            nextPaymentColumn.ToolTipText = "次回返済日に支払う予定額です。";
-            grid.Columns.Add(nextPaymentColumn);
-            grid.Columns.Add(NumberColumn("RemainingBalance", "推定残高", 120, "#,##0円"));
-            grid.Columns.Add(NumberColumn("RemainingPaymentCount", "残回数", 75, "#,##0回"));
-            grid.Columns.Add(NumberColumn("TotalPaymentAmount", "総お支払い額", 135, "#,##0円"));
-        }
-
-        private static void ConfigureScheduleGrid(DataGridView grid)
-        {
-            grid.Columns.Add(NumberColumn("PaymentNumber", "回", 55, "0"));
-            grid.Columns.Add(TextColumn("TargetMonthText", "返済対象月", 100));
-            grid.Columns.Add(TextColumn("BaseDueDateText", "調整前", 100));
-            grid.Columns.Add(TextColumn("PaymentDateText", "返済予定日", 105));
-            DataGridViewTextBoxColumn repaymentColumn = NumberColumn(
-                "RepaymentAmount",
-                "返済額（元金）",
-                135,
-                "#,##0円");
-            repaymentColumn.ToolTipText = "その回に返済する元金。残高から減る金額です。";
-            grid.Columns.Add(repaymentColumn);
-
-            DataGridViewTextBoxColumn paymentColumn = NumberColumn(
-                "PaymentAmount",
-                "お支払い額",
-                125,
-                "#,##0円");
-            paymentColumn.ToolTipText = "返済額（元金）と利息の合計。ボーナス月はボーナス分も含みます。";
-            grid.Columns.Add(paymentColumn);
-            grid.Columns.Add(NumberColumn("InterestAmount", "利息", 100, "#,##0円"));
-            grid.Columns.Add(NumberColumn("RemainingBalance", "残高", 115, "#,##0円"));
-            grid.Columns.Add(TextColumn("Status", "状態", 90));
-            grid.Columns.Add(TextColumn("FailureNote", "入金失敗メモ", 220));
-        }
-
-        private static DataGridViewTextBoxColumn TextColumn(string propertyName, string header, int width)
-        {
-            return new DataGridViewTextBoxColumn
-            {
-                DataPropertyName = propertyName,
-                HeaderText = header,
-                Width = width,
-                SortMode = DataGridViewColumnSortMode.Automatic
-            };
-        }
-
-        private static DataGridViewTextBoxColumn NumberColumn(
-            string propertyName,
-            string header,
-            int width,
-            string format)
-        {
-            DataGridViewTextBoxColumn column = TextColumn(propertyName, header, width);
-            column.DefaultCellStyle = new DataGridViewCellStyle
-            {
-                Alignment = DataGridViewContentAlignment.MiddleRight,
-                Format = format
-            };
-            return column;
-        }
-
-        private static DataGridViewTextBoxColumn DateColumn(string propertyName, string header, int width)
-        {
-            DataGridViewTextBoxColumn column = TextColumn(propertyName, header, width);
-            column.DefaultCellStyle = new DataGridViewCellStyle
-            {
-                Alignment = DataGridViewContentAlignment.MiddleCenter,
-                Format = "yyyy/MM/dd"
-            };
-            return column;
-        }
-
-        private static ScheduleViewItem CreateScheduleViewItem(RepaymentScheduleItem item)
+        private static ScheduleViewItem CreateScheduleViewItem(
+            RepaymentScheduleItem item,
+            DateTime referenceDate)
         {
             string status;
             if (item.IsPaymentFailed)
             {
                 status = "入金失敗";
             }
-            else if (item.PaymentDate.Date < DateTime.Today)
+            else if (item.PaymentDate.Date < referenceDate.Date)
             {
                 status = "経過済み";
             }
-            else if (item.PaymentDate.Date == DateTime.Today)
+            else if (item.PaymentDate.Date == referenceDate.Date)
             {
                 status = "返済日";
             }

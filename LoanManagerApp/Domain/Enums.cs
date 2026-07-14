@@ -18,4 +18,11 @@
         ByPeriod = 0,
         ByMonthlyPayment = 1
     }
+
+    public enum BonusPaymentFrequency
+    {
+        None = 0,
+        OncePerYear = 1,
+        TwicePerYear = 2
+    }
 }
