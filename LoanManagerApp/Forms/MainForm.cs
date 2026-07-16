@@ -27,6 +27,62 @@ namespace LoanManagerApp.Forms
         public MainForm()
         {
             InitializeComponent();
+            ConfigureDataGridColumns();
+        }
+
+        private void ConfigureDataGridColumns()
+        {
+            // Visual StudioデザイナーでColumnsを編集・保存した際に
+            // AutoGenerateColumnsが既定値へ戻っても、実行時は定義済み列だけを使用する。
+            _loanGrid.AutoGenerateColumns = false;
+            _scheduleGrid.AutoGenerateColumns = false;
+
+            _loanGrid.DataBindingComplete += delegate
+            {
+                RemoveUnexpectedColumns(
+                    _loanGrid,
+                    loanNameColumn,
+                    loanRepaymentTypeColumn,
+                    loanBonusPaymentColumn,
+                    loanPrincipalAmountColumn,
+                    loanAnnualInterestRateColumn,
+                    loanNextPaymentDateColumn,
+                    loanNextPaymentAmountColumn,
+                    loanRemainingBalanceColumn,
+                    loanRemainingPaymentCountColumn,
+                    loanTotalPaymentAmountColumn);
+            };
+
+            _scheduleGrid.DataBindingComplete += delegate
+            {
+                RemoveUnexpectedColumns(
+                    _scheduleGrid,
+                    schedulePaymentNumberColumn,
+                    schedulePaymentDateColumn,
+                    scheduleRepaymentAmountColumn,
+                    schedulePaymentAmountColumn,
+                    scheduleInterestAmountColumn,
+                    scheduleRemainingBalanceColumn,
+                    scheduleStatusColumn,
+                    scheduleFailureNoteColumn);
+            };
+        }
+
+        private static void RemoveUnexpectedColumns(
+            DataGridView grid,
+            params DataGridViewColumn[] expectedColumns)
+        {
+            HashSet<DataGridViewColumn> expected =
+                new HashSet<DataGridViewColumn>(expectedColumns);
+
+            for (int i = grid.Columns.Count - 1; i >= 0; i--)
+            {
+                DataGridViewColumn column = grid.Columns[i];
+                if (!expected.Contains(column))
+                {
+                    grid.Columns.RemoveAt(i);
+                }
+            }
         }
 
         public MainForm(AppSettings settings, LoanRepository repository)
@@ -129,6 +185,7 @@ namespace LoanManagerApp.Forms
                 _loadingLoanList = true;
                 try
                 {
+                    _loanGrid.AutoGenerateColumns = false;
                     _loanGrid.DataSource = items.ToList();
                     ApplyLoanRowStyles();
                     _statusLabel.Text = string.Format(
@@ -258,6 +315,7 @@ namespace LoanManagerApp.Forms
                 List<ScheduleViewItem> views = displaySchedule
                     .Select(x => CreateScheduleViewItem(x, referenceDate))
                     .ToList();
+                _scheduleGrid.AutoGenerateColumns = false;
                 _scheduleGrid.DataSource = views;
 
                 long totalPrincipal = fullSchedule.Sum(x => x.RepaymentAmount);
