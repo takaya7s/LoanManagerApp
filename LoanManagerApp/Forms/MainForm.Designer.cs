@@ -44,7 +44,6 @@ namespace LoanManagerApp.Forms
         private Button _btnResetSimulationDate;
         private DataGridView _scheduleGrid;
         private DataGridViewTextBoxColumn _colSchedulePaymentNumber;
-        private DataGridViewTextBoxColumn _colScheduleTargetMonth;
         private DataGridViewTextBoxColumn _colSchedulePaymentDate;
         private DataGridViewTextBoxColumn _colScheduleRepaymentAmount;
         private DataGridViewTextBoxColumn _colSchedulePaymentAmount;
@@ -104,7 +103,6 @@ namespace LoanManagerApp.Forms
             this._btnResetSimulationDate = new Button();
             this._scheduleGrid = new DataGridView();
             this._colSchedulePaymentNumber = new DataGridViewTextBoxColumn();
-            this._colScheduleTargetMonth = new DataGridViewTextBoxColumn();
             this._colSchedulePaymentDate = new DataGridViewTextBoxColumn();
             this._colScheduleRepaymentAmount = new DataGridViewTextBoxColumn();
             this._colSchedulePaymentAmount = new DataGridViewTextBoxColumn();
@@ -284,7 +282,7 @@ namespace LoanManagerApp.Forms
             this._colLoanName.Name = "_colLoanName";
             this._colLoanName.ReadOnly = true;
             this._colLoanName.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanName.Width = 190;
+            this._colLoanName.Width = 260;
             // 
             // _colLoanRepaymentType
             // 
@@ -293,7 +291,7 @@ namespace LoanManagerApp.Forms
             this._colLoanRepaymentType.Name = "_colLoanRepaymentType";
             this._colLoanRepaymentType.ReadOnly = true;
             this._colLoanRepaymentType.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanRepaymentType.Width = 170;
+            this._colLoanRepaymentType.Width = 125;
             // 
             // _colLoanBonusPayment
             // 
@@ -302,7 +300,7 @@ namespace LoanManagerApp.Forms
             this._colLoanBonusPayment.Name = "_colLoanBonusPayment";
             this._colLoanBonusPayment.ReadOnly = true;
             this._colLoanBonusPayment.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanBonusPayment.Width = 105;
+            this._colLoanBonusPayment.Width = 115;
             // 
             // _colLoanPrincipalAmount
             // 
@@ -313,7 +311,7 @@ namespace LoanManagerApp.Forms
             this._colLoanPrincipalAmount.Name = "_colLoanPrincipalAmount";
             this._colLoanPrincipalAmount.ReadOnly = true;
             this._colLoanPrincipalAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanPrincipalAmount.Width = 120;
+            this._colLoanPrincipalAmount.Width = 135;
             // 
             // _colLoanAnnualInterestRate
             // 
@@ -347,7 +345,7 @@ namespace LoanManagerApp.Forms
             this._colLoanNextPaymentAmount.ReadOnly = true;
             this._colLoanNextPaymentAmount.SortMode = DataGridViewColumnSortMode.Automatic;
             this._colLoanNextPaymentAmount.ToolTipText = "次回返済日に支払う予定額です。";
-            this._colLoanNextPaymentAmount.Width = 120;
+            this._colLoanNextPaymentAmount.Width = 135;
             // 
             // _colLoanRemainingBalance
             // 
@@ -358,7 +356,7 @@ namespace LoanManagerApp.Forms
             this._colLoanRemainingBalance.Name = "_colLoanRemainingBalance";
             this._colLoanRemainingBalance.ReadOnly = true;
             this._colLoanRemainingBalance.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanRemainingBalance.Width = 120;
+            this._colLoanRemainingBalance.Width = 135;
             // 
             // _colLoanRemainingPaymentCount
             // 
@@ -369,7 +367,7 @@ namespace LoanManagerApp.Forms
             this._colLoanRemainingPaymentCount.Name = "_colLoanRemainingPaymentCount";
             this._colLoanRemainingPaymentCount.ReadOnly = true;
             this._colLoanRemainingPaymentCount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanRemainingPaymentCount.Width = 75;
+            this._colLoanRemainingPaymentCount.Width = 80;
             // 
             // _colLoanTotalPaymentAmount
             // 
@@ -557,7 +555,6 @@ namespace LoanManagerApp.Forms
             this._scheduleGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this._scheduleGrid.Columns.AddRange(new DataGridViewColumn[] {
             this._colSchedulePaymentNumber,
-            this._colScheduleTargetMonth,
             this._colSchedulePaymentDate,
             this._colScheduleRepaymentAmount,
             this._colSchedulePaymentAmount,
@@ -588,15 +585,6 @@ namespace LoanManagerApp.Forms
             this._colSchedulePaymentNumber.ReadOnly = true;
             this._colSchedulePaymentNumber.SortMode = DataGridViewColumnSortMode.Automatic;
             this._colSchedulePaymentNumber.Width = 55;
-            // 
-            // _colScheduleTargetMonth
-            // 
-            this._colScheduleTargetMonth.DataPropertyName = "TargetMonthText";
-            this._colScheduleTargetMonth.HeaderText = "返済対象月";
-            this._colScheduleTargetMonth.Name = "_colScheduleTargetMonth";
-            this._colScheduleTargetMonth.ReadOnly = true;
-            this._colScheduleTargetMonth.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleTargetMonth.Width = 100;
             // 
             // _colSchedulePaymentDate
             // 
@@ -629,7 +617,7 @@ namespace LoanManagerApp.Forms
             this._colSchedulePaymentAmount.ReadOnly = true;
             this._colSchedulePaymentAmount.SortMode = DataGridViewColumnSortMode.Automatic;
             this._colSchedulePaymentAmount.ToolTipText = "返済額（元金）と利息の合計。ボーナス月はボーナス分も含みます。";
-            this._colSchedulePaymentAmount.Width = 125;
+            this._colSchedulePaymentAmount.Width = 135;
             // 
             // _colScheduleInterestAmount
             // 
@@ -640,7 +628,7 @@ namespace LoanManagerApp.Forms
             this._colScheduleInterestAmount.Name = "_colScheduleInterestAmount";
             this._colScheduleInterestAmount.ReadOnly = true;
             this._colScheduleInterestAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleInterestAmount.Width = 100;
+            this._colScheduleInterestAmount.Width = 135;
             // 
             // _colScheduleRemainingBalance
             // 
@@ -651,7 +639,7 @@ namespace LoanManagerApp.Forms
             this._colScheduleRemainingBalance.Name = "_colScheduleRemainingBalance";
             this._colScheduleRemainingBalance.ReadOnly = true;
             this._colScheduleRemainingBalance.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleRemainingBalance.Width = 115;
+            this._colScheduleRemainingBalance.Width = 135;
             // 
             // _colScheduleStatus
             // 

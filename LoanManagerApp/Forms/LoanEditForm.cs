@@ -18,6 +18,7 @@ namespace LoanManagerApp.Forms
         private readonly RepaymentCalculator _calculator;
         private int _normalClientHeight;
         private bool _adjustingLayout;
+        private bool _normalizingPeriod;
 
         public Loan ResultLoan { get; private set; }
         public IList<RepaymentScheduleItem> ResultSchedule { get; private set; }
@@ -47,7 +48,7 @@ namespace LoanManagerApp.Forms
             _lblRateNote.Text = "%（小数点以下" + _settings.InterestRateDecimalPlaces + "桁まで）";
             _lblPeriodNote.Text = "1～" + _settings.MaximumRepaymentMonths + "か月";
             _nudYears.Maximum = _settings.MaximumRepaymentMonths / 12;
-            _nudDesiredMonthlyPayment.Maximum = _settings.MaximumLoanAmount;
+            UpdateMonthMaximumForYear();
             _nudBonusPrincipal.Maximum = _settings.MaximumLoanAmount;
 
             _cmbRepaymentType.Items.Clear();
@@ -129,6 +130,71 @@ namespace LoanManagerApp.Forms
             }
         }
 
+        private void PeriodYearsValueChanged(object sender, EventArgs e)
+        {
+            if (_normalizingPeriod || _settings == null)
+            {
+                return;
+            }
+
+            UpdateMonthMaximumForYear();
+            UpdatePreview();
+        }
+
+        private void PeriodMonthsValueChanged(object sender, EventArgs e)
+        {
+            if (_normalizingPeriod || _settings == null)
+            {
+                return;
+            }
+
+            if (_nudMonths.Value == 12)
+            {
+                int nextTotalMonths = checked(((int)_nudYears.Value + 1) * 12);
+                if (nextTotalMonths <= _settings.MaximumRepaymentMonths &&
+                    _nudYears.Value < _nudYears.Maximum)
+                {
+                    try
+                    {
+                        _normalizingPeriod = true;
+                        _nudYears.Value += 1;
+                        _nudMonths.Value = 0;
+                        UpdateMonthMaximumForYear();
+                    }
+                    finally
+                    {
+                        _normalizingPeriod = false;
+                    }
+                }
+                else
+                {
+                    _nudMonths.Value = Math.Min(11, _nudMonths.Maximum);
+                }
+            }
+
+            UpdatePreview();
+        }
+
+        private void UpdateMonthMaximumForYear()
+        {
+            if (_settings == null || _nudYears == null || _nudMonths == null)
+            {
+                return;
+            }
+
+            int usedMonths = checked((int)_nudYears.Value * 12);
+            int remainingMonths = Math.Max(0, _settings.MaximumRepaymentMonths - usedMonths);
+            decimal maximumMonths = remainingMonths >= 12
+                ? 12
+                : Math.Min(11, remainingMonths);
+
+            if (_nudMonths.Value > maximumMonths)
+            {
+                _nudMonths.Value = maximumMonths;
+            }
+            _nudMonths.Maximum = maximumMonths;
+        }
+
         private void CalculateClicked(object sender, EventArgs e)
         {
             UpdatePreview();
@@ -147,9 +213,8 @@ namespace LoanManagerApp.Forms
             SelectValue(_cmbRepaymentSettingMode, loan.RepaymentSettingMode);
             _nudYears.Value = Math.Min(_nudYears.Maximum, loan.RepaymentMonths / 12);
             _nudMonths.Value = loan.RepaymentMonths % 12;
-            SetNumericValue(
-                _nudDesiredMonthlyPayment,
-                Math.Max(1, loan.DesiredMonthlyPaymentAmount));
+            _txtDesiredMonthlyPayment.Text = Math.Max(1, loan.DesiredMonthlyPaymentAmount)
+                .ToString("N0", CultureInfo.CurrentCulture);
             _nudPaymentDay.Value = Math.Max(1, Math.Min(31, loan.MonthlyPaymentDay));
             SelectBonusPaymentFrequency(loan.BonusPaymentFrequency);
             SetNumericValue(_nudBonusPrincipal, Math.Max(1, loan.BonusPrincipalAmount));
@@ -198,7 +263,7 @@ namespace LoanManagerApp.Forms
                 _cmbRepaymentType == null ||
                 _cmbRepaymentSettingMode == null ||
                 _pnlPeriod == null ||
-                _nudDesiredMonthlyPayment == null ||
+                _txtDesiredMonthlyPayment == null ||
                 _lblDesiredMonthlyAmount == null)
             {
                 return;
@@ -229,7 +294,7 @@ namespace LoanManagerApp.Forms
                                     settingMode == RepaymentSettingMode.ByMonthlyPayment;
 
             _pnlPeriod.Enabled = !byMonthlyPayment;
-            _nudDesiredMonthlyPayment.Enabled = byMonthlyPayment;
+            _txtDesiredMonthlyPayment.Enabled = byMonthlyPayment;
 
             if (_lblMonthlyPaymentNote != null)
             {
@@ -431,8 +496,7 @@ namespace LoanManagerApp.Forms
                     _cmbRepaymentSettingMode,
                     RepaymentSettingMode.ByPeriod),
                 RepaymentMonths = totalMonths,
-                DesiredMonthlyPaymentAmount =
-                    decimal.ToInt64(_nudDesiredMonthlyPayment.Value),
+                DesiredMonthlyPaymentAmount = ReadDesiredMonthlyPaymentAmount(),
                 MonthlyPaymentDay = (int)_nudPaymentDay.Value,
                 BonusPaymentFrequency = GetSelectedBonusPaymentFrequency(),
                 BonusPrincipalAmount = decimal.ToInt64(_nudBonusPrincipal.Value),
@@ -482,12 +546,17 @@ namespace LoanManagerApp.Forms
                     _settings.MaximumRepaymentMonths));
             }
 
-            if (!periodMode && loan.DesiredMonthlyPaymentAmount <= 0)
+            if (!periodMode &&
+                (loan.DesiredMonthlyPaymentAmount <= 0 ||
+                 loan.DesiredMonthlyPaymentAmount > _settings.MaximumLoanAmount))
             {
                 string amountName = loan.RepaymentType == RepaymentType.EqualPrincipal
                     ? "毎月の元金返済額"
                     : "毎月のお支払い額";
-                throw new ArgumentException(amountName + "は1円以上で入力してください。");
+                throw new ArgumentException(string.Format(
+                    "{0}は1円～{1:N0}円で入力してください。",
+                    amountName,
+                    _settings.MaximumLoanAmount));
             }
 
             if (loan.FirstRepaymentDate <= loan.BorrowDate)
@@ -612,6 +681,32 @@ namespace LoanManagerApp.Forms
 
         private void PrincipalKeyPress(object sender, KeyPressEventArgs e)
         {
+            AmountKeyPress(sender, e);
+        }
+
+        private void DesiredMonthlyPaymentEnter(object sender, EventArgs e)
+        {
+            long value;
+            if (TryReadDesiredMonthlyPaymentAmount(out value))
+            {
+                _txtDesiredMonthlyPayment.Text = value.ToString(CultureInfo.InvariantCulture);
+                _txtDesiredMonthlyPayment.SelectionStart = _txtDesiredMonthlyPayment.TextLength;
+            }
+        }
+
+        private void DesiredMonthlyPaymentLeave(object sender, EventArgs e)
+        {
+            long value;
+            if (TryReadDesiredMonthlyPaymentAmount(out value))
+            {
+                _txtDesiredMonthlyPayment.Text = value.ToString("N0", CultureInfo.CurrentCulture);
+            }
+
+            UpdatePreview();
+        }
+
+        private void AmountKeyPress(object sender, KeyPressEventArgs e)
+        {
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
             {
                 e.Handled = true;
@@ -620,7 +715,8 @@ namespace LoanManagerApp.Forms
 
         private void BackgroundMouseDown(object sender, MouseEventArgs e)
         {
-            if (_txtPrincipal != null && _txtPrincipal.Focused)
+            if ((_txtPrincipal != null && _txtPrincipal.Focused) ||
+                (_txtDesiredMonthlyPayment != null && _txtDesiredMonthlyPayment.Focused))
             {
                 ActiveControl = null;
             }
@@ -639,6 +735,47 @@ namespace LoanManagerApp.Forms
         private bool TryReadPrincipalAmount(out long value)
         {
             string text = (_txtPrincipal == null ? string.Empty : _txtPrincipal.Text ?? string.Empty).Trim();
+            NumberStyles styles = NumberStyles.Integer | NumberStyles.AllowThousands;
+            return long.TryParse(text, styles, CultureInfo.CurrentCulture, out value) ||
+                   long.TryParse(text, styles, CultureInfo.InvariantCulture, out value);
+        }
+
+        private long ReadDesiredMonthlyPaymentAmount()
+        {
+            long value;
+            if (TryReadDesiredMonthlyPaymentAmount(out value))
+            {
+                return value;
+            }
+
+            RepaymentType repaymentType = GetSelectedValue(
+                _cmbRepaymentType,
+                RepaymentType.EqualPayment);
+            RepaymentSettingMode settingMode = GetSelectedValue(
+                _cmbRepaymentSettingMode,
+                RepaymentSettingMode.ByPeriod);
+            bool monthlyAmountIsRequired =
+                repaymentType != RepaymentType.LumpSum &&
+                settingMode == RepaymentSettingMode.ByMonthlyPayment;
+
+            if (!monthlyAmountIsRequired)
+            {
+                return _sourceLoan != null && _sourceLoan.DesiredMonthlyPaymentAmount > 0
+                    ? _sourceLoan.DesiredMonthlyPaymentAmount
+                    : 30000L;
+            }
+
+            string amountName = repaymentType == RepaymentType.EqualPrincipal
+                ? "毎月の元金返済額"
+                : "毎月のお支払い額";
+            throw new ArgumentException(amountName + "は1円単位の整数で入力してください。");
+        }
+
+        private bool TryReadDesiredMonthlyPaymentAmount(out long value)
+        {
+            string text = (_txtDesiredMonthlyPayment == null
+                ? string.Empty
+                : _txtDesiredMonthlyPayment.Text ?? string.Empty).Trim();
             NumberStyles styles = NumberStyles.Integer | NumberStyles.AllowThousands;
             return long.TryParse(text, styles, CultureInfo.CurrentCulture, out value) ||
                    long.TryParse(text, styles, CultureInfo.InvariantCulture, out value);

@@ -661,7 +661,6 @@ namespace LoanManagerApp.Forms
             {
                 Id = item.Id,
                 PaymentNumber = item.PaymentNumber,
-                TargetMonthText = item.TargetMonth.ToString("yyyy年MM月"),
                 PaymentDateText = item.PaymentDate.ToString("yyyy/MM/dd"),
                 RepaymentAmount = item.RepaymentAmount,
                 PaymentAmount = item.PaymentAmount,
@@ -713,7 +712,6 @@ namespace LoanManagerApp.Forms
         {
             public long Id { get; set; }
             public int PaymentNumber { get; set; }
-            public string TargetMonthText { get; set; }
             public string PaymentDateText { get; set; }
             public long RepaymentAmount { get; set; }
             public long PaymentAmount { get; set; }
