@@ -6,55 +6,7 @@ namespace LoanManagerApp.Forms
 {
     partial class MainForm
     {
-        private IContainer components = null;
 
-        private TableLayoutPanel _shell;
-        private ToolStrip _toolbar;
-        private ToolStripButton _btnAddLoan;
-        private ToolStripButton _btnEditLoan;
-        private ToolStripButton _btnDeleteLoan;
-        private ToolStripSeparator _toolbarSeparator1;
-        private ToolStripButton _btnRefresh;
-        private ToolStripSeparator _toolbarSeparator2;
-        private ToolStripButton _btnOpenDataFolder;
-        private SplitContainer _mainSplit;
-        private DataGridView _loanGrid;
-        private DataGridViewTextBoxColumn _colLoanName;
-        private DataGridViewTextBoxColumn _colLoanRepaymentType;
-        private DataGridViewTextBoxColumn _colLoanBonusPayment;
-        private DataGridViewTextBoxColumn _colLoanPrincipalAmount;
-        private DataGridViewTextBoxColumn _colLoanAnnualInterestRate;
-        private DataGridViewTextBoxColumn _colLoanNextPaymentDate;
-        private DataGridViewTextBoxColumn _colLoanNextPaymentAmount;
-        private DataGridViewTextBoxColumn _colLoanRemainingBalance;
-        private DataGridViewTextBoxColumn _colLoanRemainingPaymentCount;
-        private DataGridViewTextBoxColumn _colLoanTotalPaymentAmount;
-        private TabControl _tabs;
-        private TabPage _scheduleTab;
-        private TabPage _detailTab;
-        private TableLayoutPanel _scheduleRoot;
-        private TableLayoutPanel _scheduleHeader;
-        private FlowLayoutPanel _scheduleTools;
-        private CheckBox _chkRemainingOnly;
-        private Button _btnFailure;
-        private FlowLayoutPanel _simulationPanel;
-        private Label _lblSimulationState;
-        private Label _lblSimulationDate;
-        private DateTimePicker _dtpSimulationDate;
-        private Button _btnResetSimulationDate;
-        private DataGridView _scheduleGrid;
-        private DataGridViewTextBoxColumn _colSchedulePaymentNumber;
-        private DataGridViewTextBoxColumn _colSchedulePaymentDate;
-        private DataGridViewTextBoxColumn _colScheduleRepaymentAmount;
-        private DataGridViewTextBoxColumn _colSchedulePaymentAmount;
-        private DataGridViewTextBoxColumn _colScheduleInterestAmount;
-        private DataGridViewTextBoxColumn _colScheduleRemainingBalance;
-        private DataGridViewTextBoxColumn _colScheduleStatus;
-        private DataGridViewTextBoxColumn _colScheduleFailureNote;
-        private Label _lblScheduleSummary;
-        private TextBox _txtDetails;
-        private StatusStrip _statusStrip;
-        private ToolStripStatusLabel _statusLabel;
 
         protected override void Dispose(bool disposing)
         {
@@ -65,9 +17,27 @@ namespace LoanManagerApp.Forms
             base.Dispose(disposing);
         }
 
+        #region Windows Form Designer generated code
+
+        /// <summary>
+        /// Windows Forms デザイナーで生成される初期化処理です。
+        /// コードエディターから直接変更せず、可能な限りデザイナーを使用してください。
+        /// </summary>
         private void InitializeComponent()
         {
-            this.components = new Container();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
+            this.components = new System.ComponentModel.Container();
             this._shell = new TableLayoutPanel();
             this._toolbar = new ToolStrip();
             this._btnAddLoan = new ToolStripButton();
@@ -79,16 +49,16 @@ namespace LoanManagerApp.Forms
             this._btnOpenDataFolder = new ToolStripButton();
             this._mainSplit = new SplitContainer();
             this._loanGrid = new DataGridView();
-            this._colLoanName = new DataGridViewTextBoxColumn();
-            this._colLoanRepaymentType = new DataGridViewTextBoxColumn();
-            this._colLoanBonusPayment = new DataGridViewTextBoxColumn();
-            this._colLoanPrincipalAmount = new DataGridViewTextBoxColumn();
-            this._colLoanAnnualInterestRate = new DataGridViewTextBoxColumn();
-            this._colLoanNextPaymentDate = new DataGridViewTextBoxColumn();
-            this._colLoanNextPaymentAmount = new DataGridViewTextBoxColumn();
-            this._colLoanRemainingBalance = new DataGridViewTextBoxColumn();
-            this._colLoanRemainingPaymentCount = new DataGridViewTextBoxColumn();
-            this._colLoanTotalPaymentAmount = new DataGridViewTextBoxColumn();
+            this.loanNameColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanRepaymentTypeColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanBonusPaymentColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanPrincipalAmountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanAnnualInterestRateColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanNextPaymentDateColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanNextPaymentAmountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanRemainingBalanceColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanRemainingPaymentCountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.loanTotalPaymentAmountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this._tabs = new TabControl();
             this._scheduleTab = new TabPage();
             this._scheduleRoot = new TableLayoutPanel();
@@ -102,14 +72,14 @@ namespace LoanManagerApp.Forms
             this._dtpSimulationDate = new DateTimePicker();
             this._btnResetSimulationDate = new Button();
             this._scheduleGrid = new DataGridView();
-            this._colSchedulePaymentNumber = new DataGridViewTextBoxColumn();
-            this._colSchedulePaymentDate = new DataGridViewTextBoxColumn();
-            this._colScheduleRepaymentAmount = new DataGridViewTextBoxColumn();
-            this._colSchedulePaymentAmount = new DataGridViewTextBoxColumn();
-            this._colScheduleInterestAmount = new DataGridViewTextBoxColumn();
-            this._colScheduleRemainingBalance = new DataGridViewTextBoxColumn();
-            this._colScheduleStatus = new DataGridViewTextBoxColumn();
-            this._colScheduleFailureNote = new DataGridViewTextBoxColumn();
+            this.schedulePaymentNumberColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.schedulePaymentDateColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.scheduleRepaymentAmountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.schedulePaymentAmountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.scheduleInterestAmountColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.scheduleRemainingBalanceColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.scheduleStatusColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.scheduleFailureNoteColumn = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this._lblScheduleSummary = new Label();
             this._detailTab = new TabPage();
             this._txtDetails = new TextBox();
@@ -250,17 +220,17 @@ namespace LoanManagerApp.Forms
             this._loanGrid.BorderStyle = BorderStyle.Fixed3D;
             this._loanGrid.ColumnHeadersHeight = 40;
             this._loanGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this._loanGrid.Columns.AddRange(new DataGridViewColumn[] {
-            this._colLoanName,
-            this._colLoanRepaymentType,
-            this._colLoanBonusPayment,
-            this._colLoanPrincipalAmount,
-            this._colLoanAnnualInterestRate,
-            this._colLoanNextPaymentDate,
-            this._colLoanNextPaymentAmount,
-            this._colLoanRemainingBalance,
-            this._colLoanRemainingPaymentCount,
-            this._colLoanTotalPaymentAmount});
+            this._loanGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.loanNameColumn,
+            this.loanRepaymentTypeColumn,
+            this.loanBonusPaymentColumn,
+            this.loanPrincipalAmountColumn,
+            this.loanAnnualInterestRateColumn,
+            this.loanNextPaymentDateColumn,
+            this.loanNextPaymentAmountColumn,
+            this.loanRemainingBalanceColumn,
+            this.loanRemainingPaymentCountColumn,
+            this.loanTotalPaymentAmountColumn});
             this._loanGrid.Dock = DockStyle.Fill;
             this._loanGrid.Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             this._loanGrid.Location = new Point(0, 0);
@@ -275,110 +245,124 @@ namespace LoanManagerApp.Forms
             this._loanGrid.SelectionChanged += new System.EventHandler(this.LoanSelectionChanged);
             this._loanGrid.CellDoubleClick += new DataGridViewCellEventHandler(this.LoanGridCellDoubleClick);
             // 
-            // _colLoanName
+            // loanNameColumn
             // 
-            this._colLoanName.DataPropertyName = "Name";
-            this._colLoanName.HeaderText = "ローン名称";
-            this._colLoanName.Name = "_colLoanName";
-            this._colLoanName.ReadOnly = true;
-            this._colLoanName.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanName.Width = 260;
+            this.loanNameColumn.DataPropertyName = "Name";
+            this.loanNameColumn.HeaderText = "ローン名称";
+            this.loanNameColumn.Name = "loanNameColumn";
+            this.loanNameColumn.ReadOnly = true;
+            this.loanNameColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanNameColumn.Width = 260;
             // 
-            // _colLoanRepaymentType
+            // loanRepaymentTypeColumn
             // 
-            this._colLoanRepaymentType.DataPropertyName = "RepaymentTypeName";
-            this._colLoanRepaymentType.HeaderText = "返済方式";
-            this._colLoanRepaymentType.Name = "_colLoanRepaymentType";
-            this._colLoanRepaymentType.ReadOnly = true;
-            this._colLoanRepaymentType.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanRepaymentType.Width = 125;
+            this.loanRepaymentTypeColumn.DataPropertyName = "RepaymentTypeName";
+            this.loanRepaymentTypeColumn.HeaderText = "返済方式";
+            this.loanRepaymentTypeColumn.Name = "loanRepaymentTypeColumn";
+            this.loanRepaymentTypeColumn.ReadOnly = true;
+            this.loanRepaymentTypeColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanRepaymentTypeColumn.Width = 125;
             // 
-            // _colLoanBonusPayment
+            // loanBonusPaymentColumn
             // 
-            this._colLoanBonusPayment.DataPropertyName = "BonusPaymentName";
-            this._colLoanBonusPayment.HeaderText = "ボーナス払い";
-            this._colLoanBonusPayment.Name = "_colLoanBonusPayment";
-            this._colLoanBonusPayment.ReadOnly = true;
-            this._colLoanBonusPayment.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanBonusPayment.Width = 115;
+            this.loanBonusPaymentColumn.DataPropertyName = "BonusPaymentName";
+            this.loanBonusPaymentColumn.HeaderText = "ボーナス払い";
+            this.loanBonusPaymentColumn.Name = "loanBonusPaymentColumn";
+            this.loanBonusPaymentColumn.ReadOnly = true;
+            this.loanBonusPaymentColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanBonusPaymentColumn.Width = 115;
             // 
-            // _colLoanPrincipalAmount
+            // loanPrincipalAmountColumn
             // 
-            this._colLoanPrincipalAmount.DataPropertyName = "PrincipalAmount";
-            this._colLoanPrincipalAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colLoanPrincipalAmount.DefaultCellStyle.Format = "#,##0円";
-            this._colLoanPrincipalAmount.HeaderText = "借入額";
-            this._colLoanPrincipalAmount.Name = "_colLoanPrincipalAmount";
-            this._colLoanPrincipalAmount.ReadOnly = true;
-            this._colLoanPrincipalAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanPrincipalAmount.Width = 135;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle1.Format = "#,##0円";
+            dataGridViewCellStyle1.NullValue = null;
+            this.loanPrincipalAmountColumn.DataPropertyName = "PrincipalAmount";
+            this.loanPrincipalAmountColumn.DefaultCellStyle = dataGridViewCellStyle1;
+            this.loanPrincipalAmountColumn.HeaderText = "借入額";
+            this.loanPrincipalAmountColumn.Name = "loanPrincipalAmountColumn";
+            this.loanPrincipalAmountColumn.ReadOnly = true;
+            this.loanPrincipalAmountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanPrincipalAmountColumn.Width = 135;
             // 
-            // _colLoanAnnualInterestRate
+            // loanAnnualInterestRateColumn
             // 
-            this._colLoanAnnualInterestRate.DataPropertyName = "AnnualInterestRate";
-            this._colLoanAnnualInterestRate.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colLoanAnnualInterestRate.DefaultCellStyle.Format = "0.##";
-            this._colLoanAnnualInterestRate.HeaderText = "年利(%)";
-            this._colLoanAnnualInterestRate.Name = "_colLoanAnnualInterestRate";
-            this._colLoanAnnualInterestRate.ReadOnly = true;
-            this._colLoanAnnualInterestRate.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanAnnualInterestRate.Width = 75;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle2.Format = "0.##";
+            dataGridViewCellStyle2.NullValue = null;
+            this.loanAnnualInterestRateColumn.DataPropertyName = "AnnualInterestRate";
+            this.loanAnnualInterestRateColumn.DefaultCellStyle = dataGridViewCellStyle2;
+            this.loanAnnualInterestRateColumn.HeaderText = "年利(%)";
+            this.loanAnnualInterestRateColumn.Name = "loanAnnualInterestRateColumn";
+            this.loanAnnualInterestRateColumn.ReadOnly = true;
+            this.loanAnnualInterestRateColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanAnnualInterestRateColumn.Width = 75;
             // 
-            // _colLoanNextPaymentDate
+            // loanNextPaymentDateColumn
             // 
-            this._colLoanNextPaymentDate.DataPropertyName = "NextPaymentDate";
-            this._colLoanNextPaymentDate.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            this._colLoanNextPaymentDate.DefaultCellStyle.Format = "yyyy/MM/dd";
-            this._colLoanNextPaymentDate.HeaderText = "次回返済日";
-            this._colLoanNextPaymentDate.Name = "_colLoanNextPaymentDate";
-            this._colLoanNextPaymentDate.ReadOnly = true;
-            this._colLoanNextPaymentDate.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanNextPaymentDate.Width = 110;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.Format = "yyyy/MM/dd";
+            dataGridViewCellStyle3.NullValue = null;
+            this.loanNextPaymentDateColumn.DataPropertyName = "NextPaymentDate";
+            this.loanNextPaymentDateColumn.DefaultCellStyle = dataGridViewCellStyle3;
+            this.loanNextPaymentDateColumn.HeaderText = "次回返済日";
+            this.loanNextPaymentDateColumn.Name = "loanNextPaymentDateColumn";
+            this.loanNextPaymentDateColumn.ReadOnly = true;
+            this.loanNextPaymentDateColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanNextPaymentDateColumn.Width = 110;
             // 
-            // _colLoanNextPaymentAmount
+            // loanNextPaymentAmountColumn
             // 
-            this._colLoanNextPaymentAmount.DataPropertyName = "NextPaymentAmount";
-            this._colLoanNextPaymentAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colLoanNextPaymentAmount.DefaultCellStyle.Format = "#,##0円";
-            this._colLoanNextPaymentAmount.HeaderText = "お支払い額";
-            this._colLoanNextPaymentAmount.Name = "_colLoanNextPaymentAmount";
-            this._colLoanNextPaymentAmount.ReadOnly = true;
-            this._colLoanNextPaymentAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanNextPaymentAmount.ToolTipText = "次回返済日に支払う予定額です。";
-            this._colLoanNextPaymentAmount.Width = 135;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle4.Format = "#,##0円";
+            dataGridViewCellStyle4.NullValue = null;
+            this.loanNextPaymentAmountColumn.DataPropertyName = "NextPaymentAmount";
+            this.loanNextPaymentAmountColumn.DefaultCellStyle = dataGridViewCellStyle4;
+            this.loanNextPaymentAmountColumn.HeaderText = "お支払い額";
+            this.loanNextPaymentAmountColumn.Name = "loanNextPaymentAmountColumn";
+            this.loanNextPaymentAmountColumn.ReadOnly = true;
+            this.loanNextPaymentAmountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanNextPaymentAmountColumn.ToolTipText = "次回返済日に支払う予定額です。";
+            this.loanNextPaymentAmountColumn.Width = 135;
             // 
-            // _colLoanRemainingBalance
+            // loanRemainingBalanceColumn
             // 
-            this._colLoanRemainingBalance.DataPropertyName = "RemainingBalance";
-            this._colLoanRemainingBalance.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colLoanRemainingBalance.DefaultCellStyle.Format = "#,##0円";
-            this._colLoanRemainingBalance.HeaderText = "推定残高";
-            this._colLoanRemainingBalance.Name = "_colLoanRemainingBalance";
-            this._colLoanRemainingBalance.ReadOnly = true;
-            this._colLoanRemainingBalance.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanRemainingBalance.Width = 135;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle5.Format = "#,##0円";
+            dataGridViewCellStyle5.NullValue = null;
+            this.loanRemainingBalanceColumn.DataPropertyName = "RemainingBalance";
+            this.loanRemainingBalanceColumn.DefaultCellStyle = dataGridViewCellStyle5;
+            this.loanRemainingBalanceColumn.HeaderText = "推定残高";
+            this.loanRemainingBalanceColumn.Name = "loanRemainingBalanceColumn";
+            this.loanRemainingBalanceColumn.ReadOnly = true;
+            this.loanRemainingBalanceColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanRemainingBalanceColumn.Width = 135;
             // 
-            // _colLoanRemainingPaymentCount
+            // loanRemainingPaymentCountColumn
             // 
-            this._colLoanRemainingPaymentCount.DataPropertyName = "RemainingPaymentCount";
-            this._colLoanRemainingPaymentCount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colLoanRemainingPaymentCount.DefaultCellStyle.Format = "#,##0回";
-            this._colLoanRemainingPaymentCount.HeaderText = "残回数";
-            this._colLoanRemainingPaymentCount.Name = "_colLoanRemainingPaymentCount";
-            this._colLoanRemainingPaymentCount.ReadOnly = true;
-            this._colLoanRemainingPaymentCount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanRemainingPaymentCount.Width = 80;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle6.Format = "#,##0回";
+            dataGridViewCellStyle6.NullValue = null;
+            this.loanRemainingPaymentCountColumn.DataPropertyName = "RemainingPaymentCount";
+            this.loanRemainingPaymentCountColumn.DefaultCellStyle = dataGridViewCellStyle6;
+            this.loanRemainingPaymentCountColumn.HeaderText = "残回数";
+            this.loanRemainingPaymentCountColumn.Name = "loanRemainingPaymentCountColumn";
+            this.loanRemainingPaymentCountColumn.ReadOnly = true;
+            this.loanRemainingPaymentCountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanRemainingPaymentCountColumn.Width = 80;
             // 
-            // _colLoanTotalPaymentAmount
+            // loanTotalPaymentAmountColumn
             // 
-            this._colLoanTotalPaymentAmount.DataPropertyName = "TotalPaymentAmount";
-            this._colLoanTotalPaymentAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colLoanTotalPaymentAmount.DefaultCellStyle.Format = "#,##0円";
-            this._colLoanTotalPaymentAmount.HeaderText = "総お支払い額";
-            this._colLoanTotalPaymentAmount.Name = "_colLoanTotalPaymentAmount";
-            this._colLoanTotalPaymentAmount.ReadOnly = true;
-            this._colLoanTotalPaymentAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colLoanTotalPaymentAmount.Width = 135;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle7.Format = "#,##0円";
+            dataGridViewCellStyle7.NullValue = null;
+            this.loanTotalPaymentAmountColumn.DataPropertyName = "TotalPaymentAmount";
+            this.loanTotalPaymentAmountColumn.DefaultCellStyle = dataGridViewCellStyle7;
+            this.loanTotalPaymentAmountColumn.HeaderText = "総お支払い額";
+            this.loanTotalPaymentAmountColumn.Name = "loanTotalPaymentAmountColumn";
+            this.loanTotalPaymentAmountColumn.ReadOnly = true;
+            this.loanTotalPaymentAmountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.loanTotalPaymentAmountColumn.Width = 135;
             // 
             // _tabs
             // 
@@ -553,15 +537,15 @@ namespace LoanManagerApp.Forms
             this._scheduleGrid.BorderStyle = BorderStyle.Fixed3D;
             this._scheduleGrid.ColumnHeadersHeight = 40;
             this._scheduleGrid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-            this._scheduleGrid.Columns.AddRange(new DataGridViewColumn[] {
-            this._colSchedulePaymentNumber,
-            this._colSchedulePaymentDate,
-            this._colScheduleRepaymentAmount,
-            this._colSchedulePaymentAmount,
-            this._colScheduleInterestAmount,
-            this._colScheduleRemainingBalance,
-            this._colScheduleStatus,
-            this._colScheduleFailureNote});
+            this._scheduleGrid.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.schedulePaymentNumberColumn,
+            this.schedulePaymentDateColumn,
+            this.scheduleRepaymentAmountColumn,
+            this.schedulePaymentAmountColumn,
+            this.scheduleInterestAmountColumn,
+            this.scheduleRemainingBalanceColumn,
+            this.scheduleStatusColumn,
+            this.scheduleFailureNoteColumn});
             this._scheduleGrid.Dock = DockStyle.Fill;
             this._scheduleGrid.Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             this._scheduleGrid.Location = new Point(11, 67);
@@ -575,89 +559,99 @@ namespace LoanManagerApp.Forms
             this._scheduleGrid.TabIndex = 1;
             this._scheduleGrid.SelectionChanged += new System.EventHandler(this.ScheduleSelectionChanged);
             // 
-            // _colSchedulePaymentNumber
+            // schedulePaymentNumberColumn
             // 
-            this._colSchedulePaymentNumber.DataPropertyName = "PaymentNumber";
-            this._colSchedulePaymentNumber.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colSchedulePaymentNumber.DefaultCellStyle.Format = "0";
-            this._colSchedulePaymentNumber.HeaderText = "回";
-            this._colSchedulePaymentNumber.Name = "_colSchedulePaymentNumber";
-            this._colSchedulePaymentNumber.ReadOnly = true;
-            this._colSchedulePaymentNumber.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colSchedulePaymentNumber.Width = 55;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle8.Format = "0";
+            dataGridViewCellStyle8.NullValue = null;
+            this.schedulePaymentNumberColumn.DataPropertyName = "PaymentNumber";
+            this.schedulePaymentNumberColumn.DefaultCellStyle = dataGridViewCellStyle8;
+            this.schedulePaymentNumberColumn.HeaderText = "回";
+            this.schedulePaymentNumberColumn.Name = "schedulePaymentNumberColumn";
+            this.schedulePaymentNumberColumn.ReadOnly = true;
+            this.schedulePaymentNumberColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.schedulePaymentNumberColumn.Width = 55;
             // 
-            // _colSchedulePaymentDate
+            // schedulePaymentDateColumn
             // 
-            this._colSchedulePaymentDate.DataPropertyName = "PaymentDateText";
-            this._colSchedulePaymentDate.HeaderText = "返済予定日";
-            this._colSchedulePaymentDate.Name = "_colSchedulePaymentDate";
-            this._colSchedulePaymentDate.ReadOnly = true;
-            this._colSchedulePaymentDate.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colSchedulePaymentDate.Width = 105;
+            this.schedulePaymentDateColumn.DataPropertyName = "PaymentDateText";
+            this.schedulePaymentDateColumn.HeaderText = "返済予定日";
+            this.schedulePaymentDateColumn.Name = "schedulePaymentDateColumn";
+            this.schedulePaymentDateColumn.ReadOnly = true;
+            this.schedulePaymentDateColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.schedulePaymentDateColumn.Width = 105;
             // 
-            // _colScheduleRepaymentAmount
+            // scheduleRepaymentAmountColumn
             // 
-            this._colScheduleRepaymentAmount.DataPropertyName = "RepaymentAmount";
-            this._colScheduleRepaymentAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colScheduleRepaymentAmount.DefaultCellStyle.Format = "#,##0円";
-            this._colScheduleRepaymentAmount.HeaderText = "返済額（元金）";
-            this._colScheduleRepaymentAmount.Name = "_colScheduleRepaymentAmount";
-            this._colScheduleRepaymentAmount.ReadOnly = true;
-            this._colScheduleRepaymentAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleRepaymentAmount.ToolTipText = "その回に返済する元金。残高から減る金額です。";
-            this._colScheduleRepaymentAmount.Width = 135;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle9.Format = "#,##0円";
+            dataGridViewCellStyle9.NullValue = null;
+            this.scheduleRepaymentAmountColumn.DataPropertyName = "RepaymentAmount";
+            this.scheduleRepaymentAmountColumn.DefaultCellStyle = dataGridViewCellStyle9;
+            this.scheduleRepaymentAmountColumn.HeaderText = "返済額（元金）";
+            this.scheduleRepaymentAmountColumn.Name = "scheduleRepaymentAmountColumn";
+            this.scheduleRepaymentAmountColumn.ReadOnly = true;
+            this.scheduleRepaymentAmountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.scheduleRepaymentAmountColumn.ToolTipText = "その回に返済する元金。残高から減る金額です。";
+            this.scheduleRepaymentAmountColumn.Width = 135;
             // 
-            // _colSchedulePaymentAmount
+            // schedulePaymentAmountColumn
             // 
-            this._colSchedulePaymentAmount.DataPropertyName = "PaymentAmount";
-            this._colSchedulePaymentAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colSchedulePaymentAmount.DefaultCellStyle.Format = "#,##0円";
-            this._colSchedulePaymentAmount.HeaderText = "お支払い額";
-            this._colSchedulePaymentAmount.Name = "_colSchedulePaymentAmount";
-            this._colSchedulePaymentAmount.ReadOnly = true;
-            this._colSchedulePaymentAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colSchedulePaymentAmount.ToolTipText = "返済額（元金）と利息の合計。ボーナス月はボーナス分も含みます。";
-            this._colSchedulePaymentAmount.Width = 135;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle10.Format = "#,##0円";
+            dataGridViewCellStyle10.NullValue = null;
+            this.schedulePaymentAmountColumn.DataPropertyName = "PaymentAmount";
+            this.schedulePaymentAmountColumn.DefaultCellStyle = dataGridViewCellStyle10;
+            this.schedulePaymentAmountColumn.HeaderText = "お支払い額";
+            this.schedulePaymentAmountColumn.Name = "schedulePaymentAmountColumn";
+            this.schedulePaymentAmountColumn.ReadOnly = true;
+            this.schedulePaymentAmountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.schedulePaymentAmountColumn.ToolTipText = "返済額（元金）と利息の合計。ボーナス月はボーナス分も含みます。";
+            this.schedulePaymentAmountColumn.Width = 135;
             // 
-            // _colScheduleInterestAmount
+            // scheduleInterestAmountColumn
             // 
-            this._colScheduleInterestAmount.DataPropertyName = "InterestAmount";
-            this._colScheduleInterestAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colScheduleInterestAmount.DefaultCellStyle.Format = "#,##0円";
-            this._colScheduleInterestAmount.HeaderText = "利息";
-            this._colScheduleInterestAmount.Name = "_colScheduleInterestAmount";
-            this._colScheduleInterestAmount.ReadOnly = true;
-            this._colScheduleInterestAmount.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleInterestAmount.Width = 135;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle11.Format = "#,##0円";
+            dataGridViewCellStyle11.NullValue = null;
+            this.scheduleInterestAmountColumn.DataPropertyName = "InterestAmount";
+            this.scheduleInterestAmountColumn.DefaultCellStyle = dataGridViewCellStyle11;
+            this.scheduleInterestAmountColumn.HeaderText = "利息";
+            this.scheduleInterestAmountColumn.Name = "scheduleInterestAmountColumn";
+            this.scheduleInterestAmountColumn.ReadOnly = true;
+            this.scheduleInterestAmountColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.scheduleInterestAmountColumn.Width = 135;
             // 
-            // _colScheduleRemainingBalance
+            // scheduleRemainingBalanceColumn
             // 
-            this._colScheduleRemainingBalance.DataPropertyName = "RemainingBalance";
-            this._colScheduleRemainingBalance.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            this._colScheduleRemainingBalance.DefaultCellStyle.Format = "#,##0円";
-            this._colScheduleRemainingBalance.HeaderText = "残高";
-            this._colScheduleRemainingBalance.Name = "_colScheduleRemainingBalance";
-            this._colScheduleRemainingBalance.ReadOnly = true;
-            this._colScheduleRemainingBalance.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleRemainingBalance.Width = 135;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            dataGridViewCellStyle12.Format = "#,##0円";
+            dataGridViewCellStyle12.NullValue = null;
+            this.scheduleRemainingBalanceColumn.DataPropertyName = "RemainingBalance";
+            this.scheduleRemainingBalanceColumn.DefaultCellStyle = dataGridViewCellStyle12;
+            this.scheduleRemainingBalanceColumn.HeaderText = "残高";
+            this.scheduleRemainingBalanceColumn.Name = "scheduleRemainingBalanceColumn";
+            this.scheduleRemainingBalanceColumn.ReadOnly = true;
+            this.scheduleRemainingBalanceColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.scheduleRemainingBalanceColumn.Width = 135;
             // 
-            // _colScheduleStatus
+            // scheduleStatusColumn
             // 
-            this._colScheduleStatus.DataPropertyName = "Status";
-            this._colScheduleStatus.HeaderText = "状態";
-            this._colScheduleStatus.Name = "_colScheduleStatus";
-            this._colScheduleStatus.ReadOnly = true;
-            this._colScheduleStatus.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleStatus.Width = 90;
+            this.scheduleStatusColumn.DataPropertyName = "Status";
+            this.scheduleStatusColumn.HeaderText = "状態";
+            this.scheduleStatusColumn.Name = "scheduleStatusColumn";
+            this.scheduleStatusColumn.ReadOnly = true;
+            this.scheduleStatusColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.scheduleStatusColumn.Width = 90;
             // 
-            // _colScheduleFailureNote
+            // scheduleFailureNoteColumn
             // 
-            this._colScheduleFailureNote.DataPropertyName = "FailureNote";
-            this._colScheduleFailureNote.HeaderText = "入金失敗メモ";
-            this._colScheduleFailureNote.Name = "_colScheduleFailureNote";
-            this._colScheduleFailureNote.ReadOnly = true;
-            this._colScheduleFailureNote.SortMode = DataGridViewColumnSortMode.Automatic;
-            this._colScheduleFailureNote.Width = 220;
+            this.scheduleFailureNoteColumn.DataPropertyName = "FailureNote";
+            this.scheduleFailureNoteColumn.HeaderText = "入金失敗メモ";
+            this.scheduleFailureNoteColumn.Name = "scheduleFailureNoteColumn";
+            this.scheduleFailureNoteColumn.ReadOnly = true;
+            this.scheduleFailureNoteColumn.SortMode = DataGridViewColumnSortMode.Automatic;
+            this.scheduleFailureNoteColumn.Width = 220;
             // 
             // _lblScheduleSummary
             // 
@@ -749,5 +743,56 @@ namespace LoanManagerApp.Forms
             this._statusStrip.PerformLayout();
             this.ResumeLayout(false);
         }
+
+        #endregion
+
+        private System.ComponentModel.IContainer components = null;
+        private System.Windows.Forms.TableLayoutPanel _shell;
+        private System.Windows.Forms.ToolStrip _toolbar;
+        private System.Windows.Forms.ToolStripButton _btnAddLoan;
+        private System.Windows.Forms.ToolStripButton _btnEditLoan;
+        private System.Windows.Forms.ToolStripButton _btnDeleteLoan;
+        private System.Windows.Forms.ToolStripSeparator _toolbarSeparator1;
+        private System.Windows.Forms.ToolStripButton _btnRefresh;
+        private System.Windows.Forms.ToolStripSeparator _toolbarSeparator2;
+        private System.Windows.Forms.ToolStripButton _btnOpenDataFolder;
+        private System.Windows.Forms.SplitContainer _mainSplit;
+        private System.Windows.Forms.DataGridView _loanGrid;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanNameColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanRepaymentTypeColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanBonusPaymentColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanPrincipalAmountColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanAnnualInterestRateColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanNextPaymentDateColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanNextPaymentAmountColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanRemainingBalanceColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanRemainingPaymentCountColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn loanTotalPaymentAmountColumn;
+        private System.Windows.Forms.TabControl _tabs;
+        private System.Windows.Forms.TabPage _scheduleTab;
+        private System.Windows.Forms.TabPage _detailTab;
+        private System.Windows.Forms.TableLayoutPanel _scheduleRoot;
+        private System.Windows.Forms.TableLayoutPanel _scheduleHeader;
+        private System.Windows.Forms.FlowLayoutPanel _scheduleTools;
+        private System.Windows.Forms.CheckBox _chkRemainingOnly;
+        private System.Windows.Forms.Button _btnFailure;
+        private System.Windows.Forms.FlowLayoutPanel _simulationPanel;
+        private System.Windows.Forms.Label _lblSimulationState;
+        private System.Windows.Forms.Label _lblSimulationDate;
+        private System.Windows.Forms.DateTimePicker _dtpSimulationDate;
+        private System.Windows.Forms.Button _btnResetSimulationDate;
+        private System.Windows.Forms.DataGridView _scheduleGrid;
+        private System.Windows.Forms.DataGridViewTextBoxColumn schedulePaymentNumberColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn schedulePaymentDateColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn scheduleRepaymentAmountColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn schedulePaymentAmountColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn scheduleInterestAmountColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn scheduleRemainingBalanceColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn scheduleStatusColumn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn scheduleFailureNoteColumn;
+        private System.Windows.Forms.Label _lblScheduleSummary;
+        private System.Windows.Forms.TextBox _txtDetails;
+        private System.Windows.Forms.StatusStrip _statusStrip;
+        private System.Windows.Forms.ToolStripStatusLabel _statusLabel;
     }
 }

@@ -13,7 +13,7 @@ using LoanManagerApp.Services;
 namespace LoanManagerApp.Forms
 {
     [DesignerCategory("Form")]
-    public sealed partial class MainForm : Form
+    public partial class MainForm : Form
     {
         private readonly AppSettings _settings;
         private readonly LoanRepository _repository;
@@ -35,7 +35,7 @@ namespace LoanManagerApp.Forms
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _repository = repository ?? throw new ArgumentNullException(nameof(repository));
 
-            _colLoanAnnualInterestRate.DefaultCellStyle.Format = CreateInterestRateFormat();
+            loanAnnualInterestRateColumn.DefaultCellStyle.Format = CreateInterestRateFormat();
 
             _updatingSimulationDate = true;
             try

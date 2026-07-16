@@ -159,4 +159,12 @@
 - 返済スケジュールの返済対象月列を削除
 - 毎月のお支払い額／元金返済額をNumericUpDownから右寄せTextBoxへ変更し、フォーカス時のカンマ除去・フォーカスアウト時の桁区切りを実装
 - 月入力の上限に繰り上げ用の12を許可し、11か月の次で年+1・月0へ正規化
+## 1.0.14.1 変更内容
+
+- `MainForm.Designer.cs` の全フィールド宣言をVisual Studio標準の配置（ファイル末尾）へ整理
+- ローン一覧10列、返済スケジュール8列を標準的な `DataGridViewTextBoxColumn` コンポーネント名へ変更
+- 各列を `InitializeComponent` 内で生成し、`System.Windows.Forms.DataGridViewColumn[]` による `Columns.AddRange` へ登録
+- 金額・日付・回数列の表示書式を `DataGridViewCellStyle` オブジェクトで割り当てる標準的なシリアライズ形式へ変更
+- `MainForm` の `sealed` を外し、フォームデザイナーが扱いやすい通常の部分クラス構成へ変更
+- DBスキーマおよび保存データ形式の変更なし
 
