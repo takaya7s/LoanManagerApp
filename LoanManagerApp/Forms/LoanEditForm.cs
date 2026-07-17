@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.ComponentModel;
+using System.Drawing;
 using System.Windows.Forms;
 using LoanManagerApp.Domain;
 using LoanManagerApp.Infrastructure;
@@ -20,6 +21,9 @@ namespace LoanManagerApp.Forms
         private bool _adjustingLayout;
         private bool _normalizingPeriod;
 
+        private static readonly Color ValidationErrorBackColor =
+            Color.FromArgb(255, 235, 205);
+
         public Loan ResultLoan { get; private set; }
         public IList<RepaymentScheduleItem> ResultSchedule { get; private set; }
 
@@ -27,7 +31,7 @@ namespace LoanManagerApp.Forms
         public LoanEditForm()
         {
             InitializeComponent();
-            _normalClientHeight = ClientSize.Height;
+            _normalClientHeight = 881;
         }
 
         public LoanEditForm(AppSettings settings, Loan loan)
@@ -36,6 +40,7 @@ namespace LoanManagerApp.Forms
             _settings = settings ?? throw new ArgumentNullException(nameof(settings));
             _sourceLoan = loan;
             _calculator = new RepaymentCalculator();
+            ClientSize = new Size(1124, _normalClientHeight);
 
             Text = _sourceLoan == null ? "ローンを登録" : "ローンを編集";
             ConfigureRuntimeControls();
@@ -49,7 +54,6 @@ namespace LoanManagerApp.Forms
             _lblPeriodNote.Text = "1～" + _settings.MaximumRepaymentMonths + "か月";
             _nudYears.Maximum = _settings.MaximumRepaymentMonths / 12;
             UpdateMonthMaximumForYear();
-            _nudBonusPrincipal.Maximum = _settings.MaximumLoanAmount;
 
             _cmbRepaymentType.Items.Clear();
             AddNamedItem(
@@ -217,7 +221,8 @@ namespace LoanManagerApp.Forms
                 .ToString("N0", CultureInfo.CurrentCulture);
             _nudPaymentDay.Value = Math.Max(1, Math.Min(31, loan.MonthlyPaymentDay));
             SelectBonusPaymentFrequency(loan.BonusPaymentFrequency);
-            SetNumericValue(_nudBonusPrincipal, Math.Max(1, loan.BonusPrincipalAmount));
+            _txtBonusPrincipal.Text = Math.Max(1, loan.BonusPrincipalAmount)
+                .ToString("N0", CultureInfo.CurrentCulture);
             SelectValue(_cmbBonusMonth1, loan.BonusMonth1);
             SelectValue(_cmbBonusMonth2, loan.BonusMonth2);
             _txtMemo.Text = loan.Memo;
@@ -259,7 +264,7 @@ namespace LoanManagerApp.Forms
                 _rdoBonusOnce == null ||
                 _rdoBonusTwice == null ||
                 _txtPrincipal == null ||
-                _nudBonusPrincipal == null ||
+                _txtBonusPrincipal == null ||
                 _cmbRepaymentType == null ||
                 _cmbRepaymentSettingMode == null ||
                 _pnlPeriod == null ||
@@ -293,7 +298,21 @@ namespace LoanManagerApp.Forms
             bool byMonthlyPayment = !isLumpSum &&
                                     settingMode == RepaymentSettingMode.ByMonthlyPayment;
 
-            _pnlPeriod.Enabled = !byMonthlyPayment;
+            bool showPeriod = !byMonthlyPayment;
+            SetFieldRowVisible(
+                8,
+                showPeriod,
+                _lblPeriod,
+                _pnlPeriod,
+                _lblPeriodNote);
+            SetFieldRowVisible(
+                9,
+                byMonthlyPayment,
+                _lblDesiredMonthlyAmount,
+                _txtDesiredMonthlyPayment,
+                _lblMonthlyPaymentNote);
+
+            _pnlPeriod.Enabled = showPeriod;
             _txtDesiredMonthlyPayment.Enabled = byMonthlyPayment;
 
             if (_lblMonthlyPaymentNote != null)
@@ -328,19 +347,30 @@ namespace LoanManagerApp.Forms
             _lblBonusMonthsSeparator.Visible = twicePerYear;
             _cmbBonusMonth2.Visible = twicePerYear;
 
-            long principalAmount;
-            decimal bonusMaximum = _settings.MaximumLoanAmount;
-            if (TryReadPrincipalAmount(out principalAmount))
+            AdjustLayoutForBonusPayment();
+        }
+
+        private void SetFieldRowVisible(
+            int rowIndex,
+            bool visible,
+            params Control[] controls)
+        {
+            if (_fields == null || rowIndex < 0 || rowIndex >= _fields.RowStyles.Count)
             {
-                bonusMaximum = Math.Max(1L, principalAmount);
-            }
-            _nudBonusPrincipal.Maximum = Math.Max(1m, bonusMaximum);
-            if (_nudBonusPrincipal.Value > _nudBonusPrincipal.Maximum)
-            {
-                _nudBonusPrincipal.Value = _nudBonusPrincipal.Maximum;
+                return;
             }
 
-            AdjustLayoutForBonusPayment();
+            foreach (Control control in controls)
+            {
+                if (control != null)
+                {
+                    control.Visible = visible;
+                }
+            }
+
+            RowStyle rowStyle = _fields.RowStyles[rowIndex];
+            rowStyle.SizeType = visible ? SizeType.AutoSize : SizeType.Absolute;
+            rowStyle.Height = 0F;
         }
 
         protected override void OnShown(EventArgs e)
@@ -423,6 +453,7 @@ namespace LoanManagerApp.Forms
         {
             try
             {
+                ResetValidationAppearance();
                 Loan loan = ReadLoanFromControls();
                 ValidateInput(loan);
                 IList<RepaymentScheduleItem> schedule = _calculator.Calculate(loan, _settings.MaximumRepaymentMonths);
@@ -433,6 +464,7 @@ namespace LoanManagerApp.Forms
             }
             catch (Exception ex)
             {
+                ShowValidationError(ex, true);
                 MessageBox.Show(this, ex.Message, "入力内容を確認してください", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
@@ -446,6 +478,7 @@ namespace LoanManagerApp.Forms
 
             try
             {
+                ResetValidationAppearance();
                 UpdateControlStates();
                 Loan loan = ReadLoanFromControls();
                 ValidateInput(loan);
@@ -473,8 +506,186 @@ namespace LoanManagerApp.Forms
             }
             catch (Exception ex)
             {
-                _lblPreview.Text = "計算できません: " + ex.Message;
+                ShowValidationError(ex, false);
             }
+        }
+
+        private void ResetValidationAppearance()
+        {
+            if (_lblPreview != null)
+            {
+                _lblPreview.BackColor = SystemColors.Control;
+            }
+
+            ResetInputBackColor(_txtName);
+            ResetInputBackColor(_txtPrincipal);
+            ResetInputBackColor(_txtRate);
+            ResetInputBackColor(_cmbRepaymentType);
+            ResetInputBackColor(_cmbInterestMethod);
+            ResetInputBackColor(_dtpBorrowDate);
+            ResetInputBackColor(_dtpFirstRepaymentDate);
+            ResetInputBackColor(_cmbRepaymentSettingMode);
+            ResetInputBackColor(_nudYears);
+            ResetInputBackColor(_nudMonths);
+            ResetInputBackColor(_txtDesiredMonthlyPayment);
+            ResetInputBackColor(_nudPaymentDay);
+            ResetInputBackColor(_rdoBonusNone);
+            ResetInputBackColor(_rdoBonusOnce);
+            ResetInputBackColor(_rdoBonusTwice);
+            ResetInputBackColor(_txtBonusPrincipal);
+            ResetInputBackColor(_cmbBonusMonth1);
+            ResetInputBackColor(_cmbBonusMonth2);
+
+            ResetLabelBackColor(_lblName);
+            ResetLabelBackColor(_lblPrincipal);
+            ResetLabelBackColor(_lblRate);
+            ResetLabelBackColor(_lblBorrowDate);
+            ResetLabelBackColor(_lblFirstRepaymentDate);
+            ResetLabelBackColor(_lblPeriod);
+            ResetLabelBackColor(_lblDesiredMonthlyAmount);
+            ResetLabelBackColor(_lblUseBonus);
+            ResetLabelBackColor(_lblBonusPrincipal);
+            ResetLabelBackColor(_lblBonusMonths);
+        }
+
+        private static void ResetInputBackColor(Control control)
+        {
+            if (control == null)
+            {
+                return;
+            }
+
+            if (control is RadioButton)
+            {
+                control.BackColor = Color.Transparent;
+                return;
+            }
+
+            control.BackColor = SystemColors.Window;
+        }
+
+        private static void ResetLabelBackColor(Control control)
+        {
+            if (control != null)
+            {
+                control.BackColor = Color.Transparent;
+            }
+        }
+
+        private void ShowValidationError(Exception ex, bool focusInput)
+        {
+            ResetValidationAppearance();
+            _lblPreview.BackColor = ValidationErrorBackColor;
+            _lblPreview.Text = "計算できません: " + ex.Message;
+
+            Control[] targets = GetValidationTargets(ex);
+            foreach (Control target in targets)
+            {
+                if (target != null)
+                {
+                    target.BackColor = ValidationErrorBackColor;
+                }
+            }
+
+            if (focusInput)
+            {
+                Control focusTarget = targets.FirstOrDefault(
+                    x => x != null && x.CanSelect && x.Visible && x.Enabled);
+                if (focusTarget != null)
+                {
+                    focusTarget.Focus();
+                }
+            }
+        }
+
+        private Control[] GetValidationTargets(Exception ex)
+        {
+            InputValidationException validationException =
+                ex as InputValidationException;
+            if (validationException != null)
+            {
+                return validationException.Targets;
+            }
+
+            string message = ex.Message ?? string.Empty;
+            if (message.Contains("ボーナス払い月") ||
+                message.Contains("ボーナス月") ||
+                message.Contains("ボーナス払いがありません") ||
+                message.Contains("実際のボーナス加算がありません"))
+            {
+                return new Control[]
+                {
+                    _lblUseBonus,
+                    _rdoBonusOnce,
+                    _rdoBonusTwice,
+                    _lblBonusMonths,
+                    _cmbBonusMonth1,
+                    _cmbBonusMonth2
+                };
+            }
+            if (message.Contains("ボーナス加算元金"))
+            {
+                return new Control[]
+                {
+                    _lblUseBonus,
+                    _lblBonusPrincipal,
+                    _txtBonusPrincipal
+                };
+            }
+            if (message.Contains("毎月のお支払い額") ||
+                message.Contains("通常月のお支払い額") ||
+                message.Contains("毎月の元金返済額") ||
+                message.Contains("毎月の金額") ||
+                message.Contains("金額では最大返済期間"))
+            {
+                return new Control[]
+                {
+                    _lblDesiredMonthlyAmount,
+                    _txtDesiredMonthlyPayment
+                };
+            }
+            if (message.Contains("ローン名称"))
+            {
+                return new Control[] { _lblName, _txtName };
+            }
+            if (message.Contains("年間金利"))
+            {
+                return new Control[] { _lblRate, _txtRate };
+            }
+            if (message.Contains("初回返済日"))
+            {
+                return new Control[]
+                {
+                    _lblBorrowDate,
+                    _dtpBorrowDate,
+                    _lblFirstRepaymentDate,
+                    _dtpFirstRepaymentDate
+                };
+            }
+            if (message.Contains("指定した条件では返済期間内に完済できません"))
+            {
+                return new Control[]
+                {
+                    _lblPeriod,
+                    _nudYears,
+                    _nudMonths,
+                    _lblBonusPrincipal,
+                    _txtBonusPrincipal,
+                    _lblBonusMonths,
+                    _cmbBonusMonth1,
+                    _cmbBonusMonth2
+                };
+            }
+            if (message.Contains("借入額"))
+            {
+                return new Control[] { _lblPrincipal, _txtPrincipal };
+            }
+            if (message.Contains("返済期間"))
+            {
+                return new Control[] { _lblPeriod, _nudYears, _nudMonths };
+            }
+
+            return new Control[0];
         }
 
         private Loan ReadLoanFromControls()
@@ -499,7 +710,7 @@ namespace LoanManagerApp.Forms
                 DesiredMonthlyPaymentAmount = ReadDesiredMonthlyPaymentAmount(),
                 MonthlyPaymentDay = (int)_nudPaymentDay.Value,
                 BonusPaymentFrequency = GetSelectedBonusPaymentFrequency(),
-                BonusPrincipalAmount = decimal.ToInt64(_nudBonusPrincipal.Value),
+                BonusPrincipalAmount = ReadBonusPrincipalAmount(),
                 BonusMonth1 = GetSelectedValue(_cmbBonusMonth1, 6),
                 BonusMonth2 = GetSelectedValue(_cmbBonusMonth2, 12),
                 Memo = _txtMemo.Text.Trim(),
@@ -513,25 +724,34 @@ namespace LoanManagerApp.Forms
         {
             if (string.IsNullOrWhiteSpace(loan.Name))
             {
-                throw new ArgumentException("ローン名称を入力してください。");
+                throw new InputValidationException(
+                    "ローン名称を入力してください。",
+                    _lblName,
+                    _txtName);
             }
 
             if (loan.PrincipalAmount < _settings.MinimumLoanAmount ||
                 loan.PrincipalAmount > _settings.MaximumLoanAmount)
             {
-                throw new ArgumentException(string.Format(
-                    "借入額は {0:N0}円～{1:N0}円で入力してください。",
-                    _settings.MinimumLoanAmount,
-                    _settings.MaximumLoanAmount));
+                throw new InputValidationException(
+                    string.Format(
+                        "借入額は {0:N0}円～{1:N0}円で入力してください。",
+                        _settings.MinimumLoanAmount,
+                        _settings.MaximumLoanAmount),
+                    _lblPrincipal,
+                    _txtPrincipal);
             }
 
             if (loan.AnnualInterestRate < _settings.MinimumInterestRate ||
                 loan.AnnualInterestRate > _settings.MaximumInterestRate)
             {
-                throw new ArgumentException(string.Format(
-                    "年間金利は {0}～{1}%で入力してください。",
-                    FormatRate(_settings.MinimumInterestRate),
-                    FormatRate(_settings.MaximumInterestRate)));
+                throw new InputValidationException(
+                    string.Format(
+                        "年間金利は {0}～{1}%で入力してください。",
+                        FormatRate(_settings.MinimumInterestRate),
+                        FormatRate(_settings.MaximumInterestRate)),
+                    _lblRate,
+                    _txtRate);
             }
 
             bool periodMode = loan.RepaymentType == RepaymentType.LumpSum ||
@@ -540,10 +760,14 @@ namespace LoanManagerApp.Forms
                 (loan.RepaymentMonths < _settings.MinimumRepaymentMonths ||
                  loan.RepaymentMonths > _settings.MaximumRepaymentMonths))
             {
-                throw new ArgumentException(string.Format(
-                    "返済期間は {0}～{1}か月で入力してください。",
-                    _settings.MinimumRepaymentMonths,
-                    _settings.MaximumRepaymentMonths));
+                throw new InputValidationException(
+                    string.Format(
+                        "返済期間は {0}～{1}か月で入力してください。",
+                        _settings.MinimumRepaymentMonths,
+                        _settings.MaximumRepaymentMonths),
+                    _lblPeriod,
+                    _nudYears,
+                    _nudMonths);
             }
 
             if (!periodMode &&
@@ -553,35 +777,54 @@ namespace LoanManagerApp.Forms
                 string amountName = loan.RepaymentType == RepaymentType.EqualPrincipal
                     ? "毎月の元金返済額"
                     : "毎月のお支払い額";
-                throw new ArgumentException(string.Format(
-                    "{0}は1円～{1:N0}円で入力してください。",
-                    amountName,
-                    _settings.MaximumLoanAmount));
+                throw new InputValidationException(
+                    string.Format(
+                        "{0}は1円～{1:N0}円で入力してください。",
+                        amountName,
+                        _settings.MaximumLoanAmount),
+                    _lblDesiredMonthlyAmount,
+                    _txtDesiredMonthlyPayment);
             }
 
             if (loan.FirstRepaymentDate <= loan.BorrowDate)
             {
-                throw new ArgumentException("初回返済日は借入日より後の日付にしてください。");
+                throw new InputValidationException(
+                    "初回返済日は借入日より後の日付にしてください。",
+                    _lblBorrowDate,
+                    _dtpBorrowDate,
+                    _lblFirstRepaymentDate,
+                    _dtpFirstRepaymentDate);
             }
 
             if (loan.UseBonusPayment)
             {
                 if (loan.RepaymentType == RepaymentType.LumpSum)
                 {
-                    throw new ArgumentException("一括返済ではボーナス払いを使用できません。");
+                    throw new InputValidationException(
+                        "一括返済ではボーナス払いを使用できません。",
+                        _lblUseBonus,
+                        _rdoBonusNone,
+                        _rdoBonusOnce,
+                        _rdoBonusTwice);
                 }
 
                 if (loan.BonusPaymentFrequency == BonusPaymentFrequency.TwicePerYear &&
                     loan.BonusMonth1 == loan.BonusMonth2)
                 {
-                    throw new ArgumentException("年2回のボーナス払い月は異なる月を指定してください。");
+                    throw new InputValidationException(
+                        "年2回のボーナス払い月は異なる月を指定してください。",
+                        _lblBonusMonths,
+                        _cmbBonusMonth1,
+                        _cmbBonusMonth2);
                 }
 
                 if (loan.BonusPrincipalAmount <= 0 ||
                     loan.BonusPrincipalAmount > loan.PrincipalAmount)
                 {
-                    throw new ArgumentException(
-                        "1回あたりのボーナス加算元金は借入額以下で入力してください。");
+                    throw new InputValidationException(
+                        "1回あたりのボーナス加算元金は借入額以下で入力してください。",
+                        _lblBonusPrincipal,
+                        _txtBonusPrincipal);
                 }
             }
         }
@@ -705,6 +948,27 @@ namespace LoanManagerApp.Forms
             UpdatePreview();
         }
 
+        private void BonusPrincipalEnter(object sender, EventArgs e)
+        {
+            long value;
+            if (TryReadBonusPrincipalAmount(out value))
+            {
+                _txtBonusPrincipal.Text = value.ToString(CultureInfo.InvariantCulture);
+                _txtBonusPrincipal.SelectionStart = _txtBonusPrincipal.TextLength;
+            }
+        }
+
+        private void BonusPrincipalLeave(object sender, EventArgs e)
+        {
+            long value;
+            if (TryReadBonusPrincipalAmount(out value))
+            {
+                _txtBonusPrincipal.Text = value.ToString("N0", CultureInfo.CurrentCulture);
+            }
+
+            UpdatePreview();
+        }
+
         private void AmountKeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
@@ -716,7 +980,8 @@ namespace LoanManagerApp.Forms
         private void BackgroundMouseDown(object sender, MouseEventArgs e)
         {
             if ((_txtPrincipal != null && _txtPrincipal.Focused) ||
-                (_txtDesiredMonthlyPayment != null && _txtDesiredMonthlyPayment.Focused))
+                (_txtDesiredMonthlyPayment != null && _txtDesiredMonthlyPayment.Focused) ||
+                (_txtBonusPrincipal != null && _txtBonusPrincipal.Focused))
             {
                 ActiveControl = null;
             }
@@ -727,7 +992,10 @@ namespace LoanManagerApp.Forms
             long value;
             if (!TryReadPrincipalAmount(out value))
             {
-                throw new ArgumentException("借入額は1円単位の整数で入力してください。");
+                throw new InputValidationException(
+                    "借入額は1円単位の整数で入力してください。",
+                    _lblPrincipal,
+                    _txtPrincipal);
             }
             return value;
         }
@@ -768,7 +1036,10 @@ namespace LoanManagerApp.Forms
             string amountName = repaymentType == RepaymentType.EqualPrincipal
                 ? "毎月の元金返済額"
                 : "毎月のお支払い額";
-            throw new ArgumentException(amountName + "は1円単位の整数で入力してください。");
+            throw new InputValidationException(
+                amountName + "は1円単位の整数で入力してください。",
+                _lblDesiredMonthlyAmount,
+                _txtDesiredMonthlyPayment);
         }
 
         private bool TryReadDesiredMonthlyPaymentAmount(out long value)
@@ -776,6 +1047,37 @@ namespace LoanManagerApp.Forms
             string text = (_txtDesiredMonthlyPayment == null
                 ? string.Empty
                 : _txtDesiredMonthlyPayment.Text ?? string.Empty).Trim();
+            NumberStyles styles = NumberStyles.Integer | NumberStyles.AllowThousands;
+            return long.TryParse(text, styles, CultureInfo.CurrentCulture, out value) ||
+                   long.TryParse(text, styles, CultureInfo.InvariantCulture, out value);
+        }
+
+        private long ReadBonusPrincipalAmount()
+        {
+            long value;
+            if (TryReadBonusPrincipalAmount(out value))
+            {
+                return value;
+            }
+
+            if (GetSelectedBonusPaymentFrequency() == BonusPaymentFrequency.None)
+            {
+                return _sourceLoan != null && _sourceLoan.BonusPrincipalAmount > 0
+                    ? _sourceLoan.BonusPrincipalAmount
+                    : 500000L;
+            }
+
+            throw new InputValidationException(
+                "1回あたりのボーナス加算元金は1円単位の整数で入力してください。",
+                _lblBonusPrincipal,
+                _txtBonusPrincipal);
+        }
+
+        private bool TryReadBonusPrincipalAmount(out long value)
+        {
+            string text = (_txtBonusPrincipal == null
+                ? string.Empty
+                : _txtBonusPrincipal.Text ?? string.Empty).Trim();
             NumberStyles styles = NumberStyles.Integer | NumberStyles.AllowThousands;
             return long.TryParse(text, styles, CultureInfo.CurrentCulture, out value) ||
                    long.TryParse(text, styles, CultureInfo.InvariantCulture, out value);
@@ -796,17 +1098,22 @@ namespace LoanManagerApp.Forms
                     CultureInfo.InvariantCulture,
                     out value))
             {
-                throw new ArgumentException("年間金利を数値で入力してください。");
+                throw new InputValidationException(
+                    "年間金利を数値で入力してください。",
+                    _lblRate,
+                    _txtRate);
             }
 
             int[] bits = decimal.GetBits(value);
             int scale = (bits[3] >> 16) & 0x7F;
             if (scale > _settings.InterestRateDecimalPlaces)
             {
-                throw new ArgumentException(
+                throw new InputValidationException(
                     "年間金利は小数点以下" +
                     _settings.InterestRateDecimalPlaces +
-                    "桁までで入力してください。");
+                    "桁までで入力してください。",
+                    _lblRate,
+                    _txtRate);
             }
 
             return value;
@@ -832,6 +1139,19 @@ namespace LoanManagerApp.Forms
             return remainingMonths + "か月";
         }
 
+
+        private sealed class InputValidationException : ArgumentException
+        {
+            public Control[] Targets { get; private set; }
+
+            public InputValidationException(
+                string message,
+                params Control[] targets)
+                : base(message)
+            {
+                Targets = targets ?? new Control[0];
+            }
+        }
 
         private sealed class NamedValue<T>
         {

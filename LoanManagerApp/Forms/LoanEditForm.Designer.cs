@@ -56,7 +56,7 @@ namespace LoanManagerApp.Forms
         private GroupBox _grpBonus;
         private TableLayoutPanel _bonusTable;
         private Label _lblBonusPrincipal;
-        private NumericUpDown _nudBonusPrincipal;
+        private TextBox _txtBonusPrincipal;
         private Label _lblBonusMonths;
         private FlowLayoutPanel _bonusMonthsPanel;
         private ComboBox _cmbBonusMonth1;
@@ -134,7 +134,7 @@ namespace LoanManagerApp.Forms
             this._grpBonus = new GroupBox();
             this._bonusTable = new TableLayoutPanel();
             this._lblBonusPrincipal = new Label();
-            this._nudBonusPrincipal = new NumericUpDown();
+            this._txtBonusPrincipal = new TextBox();
             this._lblBonusMonths = new Label();
             this._bonusMonthsPanel = new FlowLayoutPanel();
             this._cmbBonusMonth1 = new ComboBox();
@@ -160,7 +160,6 @@ namespace LoanManagerApp.Forms
             ((ISupportInitialize)(this._nudPaymentDay)).BeginInit();
             this._grpBonus.SuspendLayout();
             this._bonusTable.SuspendLayout();
-            ((ISupportInitialize)(this._nudBonusPrincipal)).BeginInit();
             this._bonusMonthsPanel.SuspendLayout();
             this._buttons.SuspendLayout();
             this.SuspendLayout();
@@ -180,7 +179,7 @@ namespace LoanManagerApp.Forms
             this._root.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             this._root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             this._root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this._root.Size = new Size(1124, 881);
+            this._root.Size = new Size(1124, 1020);
             this._root.TabIndex = 0;
             this._root.MouseDown += new MouseEventHandler(this.BackgroundMouseDown);
             // 
@@ -191,7 +190,7 @@ namespace LoanManagerApp.Forms
             this._scrollPanel.Dock = DockStyle.Fill;
             this._scrollPanel.Location = new Point(15, 15);
             this._scrollPanel.Name = "_scrollPanel";
-            this._scrollPanel.Size = new Size(1094, 625);
+            this._scrollPanel.Size = new Size(1094, 764);
             this._scrollPanel.TabIndex = 0;
             this._scrollPanel.MouseDown += new MouseEventHandler(this.BackgroundMouseDown);
             // 
@@ -577,39 +576,37 @@ namespace LoanManagerApp.Forms
             // 
             // _grpBonus
             // 
-            this._grpBonus.AutoSize = true;
-            this._grpBonus.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this._grpBonus.AutoSize = false;
             this._grpBonus.Controls.Add(this._bonusTable);
             this._grpBonus.Dock = DockStyle.Top;
             this._grpBonus.Location = new Point(3, 559);
             this._grpBonus.Name = "_grpBonus";
-            this._grpBonus.MinimumSize = new Size(0, 180);
+            this._grpBonus.MinimumSize = new Size(0, 220);
             this._grpBonus.Padding = new Padding(10);
-            this._grpBonus.Size = new Size(1076, 180);
+            this._grpBonus.Size = new Size(1076, 220);
             this._grpBonus.TabIndex = 12;
             this._grpBonus.TabStop = false;
             this._grpBonus.Text = "ボーナス払い設定";
             // 
             // _bonusTable
             // 
-            this._bonusTable.AutoSize = true;
-            this._bonusTable.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            this._bonusTable.AutoSize = false;
             this._bonusTable.ColumnCount = 2;
             this._bonusTable.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 310F));
             this._bonusTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             this._bonusTable.Controls.Add(this._lblBonusPrincipal, 0, 0);
-            this._bonusTable.Controls.Add(this._nudBonusPrincipal, 1, 0);
+            this._bonusTable.Controls.Add(this._txtBonusPrincipal, 1, 0);
             this._bonusTable.Controls.Add(this._lblBonusMonths, 0, 1);
             this._bonusTable.Controls.Add(this._bonusMonthsPanel, 1, 1);
             this._bonusTable.Controls.Add(this._lblBonusNote, 0, 2);
-            this._bonusTable.Dock = DockStyle.Top;
+            this._bonusTable.Dock = DockStyle.Fill;
             this._bonusTable.Location = new Point(10, 37);
             this._bonusTable.Name = "_bonusTable";
             this._bonusTable.RowCount = 3;
-            this._bonusTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this._bonusTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this._bonusTable.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            this._bonusTable.Size = new Size(1056, 107);
+            this._bonusTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 52F));
+            this._bonusTable.RowStyles.Add(new RowStyle(SizeType.Absolute, 58F));
+            this._bonusTable.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            this._bonusTable.Size = new Size(1056, 173);
             this._bonusTable.TabIndex = 0;
             this._bonusTable.SetColumnSpan(this._lblBonusNote, 2);
             this._lblBonusPrincipal.Anchor = AnchorStyles.Left;
@@ -620,48 +617,50 @@ namespace LoanManagerApp.Forms
             this._lblBonusMonths.AutoSize = true;
             this._lblBonusMonths.Margin = new Padding(3, 8, 3, 8);
             this._lblBonusMonths.Text = "ボーナス払い月";
-            this._nudBonusPrincipal.DecimalPlaces = 0;
-            this._nudBonusPrincipal.Font = new Font("Yu Gothic UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
-            this._nudBonusPrincipal.Increment = 10000;
-            this._nudBonusPrincipal.Margin = new Padding(3, 6, 3, 6);
-            this._nudBonusPrincipal.Maximum = 1000000000M;
-            this._nudBonusPrincipal.Minimum = 1;
-            this._nudBonusPrincipal.Size = new Size(260, 39);
-            this._nudBonusPrincipal.ThousandsSeparator = true;
-            this._nudBonusPrincipal.TabIndex = 0;
-            this._nudBonusPrincipal.ValueChanged += new System.EventHandler(this.PreviewValueChanged);
+            this._txtBonusPrincipal.Dock = DockStyle.Left;
+            this._txtBonusPrincipal.Font = new Font("Yu Gothic UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
+            this._txtBonusPrincipal.Margin = new Padding(3, 6, 3, 6);
+            this._txtBonusPrincipal.MaxLength = 20;
+            this._txtBonusPrincipal.Name = "_txtBonusPrincipal";
+            this._txtBonusPrincipal.Size = new Size(280, 39);
+            this._txtBonusPrincipal.TabIndex = 0;
+            this._txtBonusPrincipal.TextAlign = HorizontalAlignment.Right;
+            this._txtBonusPrincipal.Enter += new System.EventHandler(this.BonusPrincipalEnter);
+            this._txtBonusPrincipal.Leave += new System.EventHandler(this.BonusPrincipalLeave);
+            this._txtBonusPrincipal.KeyPress += new KeyPressEventHandler(this.AmountKeyPress);
             // 
             // _bonusMonthsPanel
             // 
             this._bonusMonthsPanel.AutoSize = true;
+            this._bonusMonthsPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
             this._bonusMonthsPanel.Controls.Add(this._cmbBonusMonth1);
             this._bonusMonthsPanel.Controls.Add(this._lblBonusMonthsSeparator);
             this._bonusMonthsPanel.Controls.Add(this._cmbBonusMonth2);
             this._bonusMonthsPanel.Controls.Add(this._lblBonusMonthsSuffix);
             this._bonusMonthsPanel.Location = new Point(220, 48);
             this._bonusMonthsPanel.Margin = new Padding(0);
+            this._bonusMonthsPanel.MinimumSize = new Size(0, 58);
             this._bonusMonthsPanel.Name = "_bonusMonthsPanel";
-            this._bonusMonthsPanel.Size = new Size(245, 45);
+            this._bonusMonthsPanel.Padding = new Padding(0, 2, 0, 12);
+            this._bonusMonthsPanel.Size = new Size(245, 58);
             this._bonusMonthsPanel.TabIndex = 1;
-            this._cmbBonusMonth1.Dock = DockStyle.Left;
             this._cmbBonusMonth1.DropDownStyle = ComboBoxStyle.DropDownList;
             this._cmbBonusMonth1.Font = new Font("Yu Gothic UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
-            this._cmbBonusMonth1.Margin = new Padding(3, 6, 3, 6);
+            this._cmbBonusMonth1.Margin = new Padding(3, 3, 3, 8);
             this._cmbBonusMonth1.Size = new Size(85, 39);
             this._cmbBonusMonth1.TabIndex = 0;
             this._cmbBonusMonth1.SelectedIndexChanged += new System.EventHandler(this.PreviewValueChanged);
             this._lblBonusMonthsSeparator.AutoSize = true;
-            this._lblBonusMonthsSeparator.Margin = new Padding(5, 6, 5, 0);
+            this._lblBonusMonthsSeparator.Margin = new Padding(5, 6, 5, 8);
             this._lblBonusMonthsSeparator.Text = "月 と";
-            this._cmbBonusMonth2.Dock = DockStyle.Left;
             this._cmbBonusMonth2.DropDownStyle = ComboBoxStyle.DropDownList;
             this._cmbBonusMonth2.Font = new Font("Yu Gothic UI", 14F, FontStyle.Regular, GraphicsUnit.Point);
-            this._cmbBonusMonth2.Margin = new Padding(3, 6, 3, 6);
+            this._cmbBonusMonth2.Margin = new Padding(3, 3, 3, 8);
             this._cmbBonusMonth2.Size = new Size(85, 39);
             this._cmbBonusMonth2.TabIndex = 1;
             this._cmbBonusMonth2.SelectedIndexChanged += new System.EventHandler(this.PreviewValueChanged);
             this._lblBonusMonthsSuffix.AutoSize = true;
-            this._lblBonusMonthsSuffix.Margin = new Padding(5, 6, 0, 0);
+            this._lblBonusMonthsSuffix.Margin = new Padding(5, 6, 0, 8);
             this._lblBonusMonthsSuffix.Text = "月";
             // 
             // _lblBonusNote
@@ -694,7 +693,7 @@ namespace LoanManagerApp.Forms
             this._lblPreview.AutoSize = true;
             this._lblPreview.BorderStyle = BorderStyle.FixedSingle;
             this._lblPreview.Dock = DockStyle.Fill;
-            this._lblPreview.Location = new Point(15, 643);
+            this._lblPreview.Location = new Point(15, 782);
             this._lblPreview.MinimumSize = new Size(0, 118);
             this._lblPreview.Name = "_lblPreview";
             this._lblPreview.Padding = new Padding(10);
@@ -710,7 +709,7 @@ namespace LoanManagerApp.Forms
             this._buttons.Controls.Add(this._btnCalculate);
             this._buttons.Dock = DockStyle.Fill;
             this._buttons.FlowDirection = FlowDirection.RightToLeft;
-            this._buttons.Location = new Point(15, 764);
+            this._buttons.Location = new Point(15, 903);
             this._buttons.Name = "_buttons";
             this._buttons.Padding = new Padding(0, 10, 0, 0);
             this._buttons.Size = new Size(1094, 102);
@@ -742,7 +741,7 @@ namespace LoanManagerApp.Forms
             this.AutoScaleDimensions = new SizeF(96F, 96F);
             this.AutoScaleMode = AutoScaleMode.Dpi;
             this.CancelButton = this._btnCancel;
-            this.ClientSize = new Size(1124, 881);
+            this.ClientSize = new Size(1124, 1020);
             this.Controls.Add(this._root);
             this.Font = new Font("Yu Gothic UI", 12F, FontStyle.Regular, GraphicsUnit.Point);
             this.MinimumSize = new Size(980, 740);
@@ -766,7 +765,6 @@ namespace LoanManagerApp.Forms
             this._grpBonus.PerformLayout();
             this._bonusTable.ResumeLayout(false);
             this._bonusTable.PerformLayout();
-            ((ISupportInitialize)(this._nudBonusPrincipal)).EndInit();
             this._bonusMonthsPanel.ResumeLayout(false);
             this._bonusMonthsPanel.PerformLayout();
             this._buttons.ResumeLayout(false);
